@@ -42,7 +42,7 @@ $eventTypes = ["S", "E"];                                           // S = start
 // ==============================================================================================================================================================================================
 // načtení vstupních souborů
 foreach ($tabsInList as $file) {
-    ${"in_".$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds."in_".$file);
+    ${"in_".$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds."in_".$file.".csv");
 }
 // vytvoření výstupních souborů
 foreach ($tabsOutList as $file) {
