@@ -34,7 +34,7 @@ $tabsInList  = array_keys($tabsIn);
 $tabsOutList = array_keys($tabsOut);
 
 // typy událostí
-$eventTypes = ["S", "E"];                                           // S = start, E = end
+$eventTypes = ["+", "-"];                                           // + = start, - = end
  
 // ==============================================================================================================================================================================================
 // funkce
@@ -55,7 +55,7 @@ foreach ($tabsOut as $tab => $cols) {
     ${"out_".$tab} -> writeRow($cols);
 }
 // načtení vstupních tabulek sessions do pole událostí
-$events = [];                                           // inicializace pole událostí
+//$events = [];                                           // inicializace pole událostí
 foreach ($tabsIn as $tab => $cols) {
     if (!in_array($tab, $tabsInArr)) {continue;}        // vstupní tabulky, které nebudou převáděny na pole    
     foreach (${"in_".$tab} as $rowNum => $row) {        // načítání řádků tabulky [= iterace řádků]
@@ -68,17 +68,17 @@ foreach ($tabsIn as $tab => $cols) {
                     case "idloginsession":  break;      // sloupec nezpracováván
                     case "idqueuesession":  break;      // sloupec nezpracováván
                     case "idpausesession":  break;      // sloupec nezpracováván
-                    case "start_time":      if ($eventType == "S") {$colVals[] = $row[$columnId];}  break;
-                    case "end_time":        if ($eventType == "E") {$colVals[] = $row[$columnId];}  break;
+                    case "start_time":      if ($eventType == "+") {$colVals[] = $row[$columnId];}  break;
+                    case "end_time":        if ($eventType == "-") {$colVals[] = $row[$columnId];}  break;
                     case "duration":        switch ($eventType) {
-                                                case "S":               $colVals[] = "S";           break;
-                                                case "E":               $colVals[] = "E";           break;
+                                                case "+":               $colVals[] = "+";
+                                                case "-":               $colVals[] = "-";
                                             }                        
                                             switch ($tab) {
-                                                case "loginSessions":   $colVals[] = "L";           break;
-                                                case "loginSessions":   $colVals[] = "Q";           break;
-                                                case "loginSessions":   $colVals[] = "P";
-                                            }           // vlastní hodnota 'duration' nezpracovávána
+                                                case "loginSessions":   $colVals[] = "L";
+                                                case "queueSessions":   $colVals[] = "Q";
+                                                case "pauseSessions":   $colVals[] = "P";
+                                            }   break;  // vlastní hodnota 'duration' nezpracovávána
                     case "iduser":          $colVals[] = $row[$columnId];   break; 
                     case "idqueue":         $colVals[] = ($tab == "queueSessions") ? $row[$columnId] : "";  break; 
                     case "idpause":         $colVals[] = ($tab == "pauseSessions") ? $row[$columnId] : "";  break;                    
