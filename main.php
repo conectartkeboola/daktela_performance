@@ -23,7 +23,7 @@ $tabsIn = [
     "pauses"        => ["idpause", "title", "idinstance", "type", "paid"] */
 ];
 $tabsInArr = ["loginSessions", "pauseSessions", "queueSessions"];   // vstupní tabulky, které budou převáděny na pole
-$colsComm =  ["start_time", "end_time", "iduser"];                  // sloupce v poli událostí, které se vyskytují ve všech vstupních tabulkách
+//$colsComm =  ["start_time", "end_time", "iduser"];                  // sloupce v poli událostí, které se vyskytují ve všech vstupních tabulkách
 
 $tabsOut = [                                                        // názvy sloupců výstupních tabulek se prefixují v kódu níže
    "events"         => ["time", "type", "object", "iduser", "idqueue", "idpause"]/*, 
@@ -58,7 +58,7 @@ foreach ($tabsOut as $tab => $cols) {
 $events = [];                                           // inicializace pole událostí
 foreach ($tabsIn as $tab => $cols) {
     if (!in_array($tab, $tabsInArr)) {continue;}        // vstupní tabulky, které nebudou převáděny na pole    
-    foreach ($tab as $rowNum => $row) {                 // načítání řádků tabulky [= iterace řádků]
+    foreach (${"in_".$tab} as $rowNum => $row) {        // načítání řádků tabulky [= iterace řádků]
         if ($rowNum == 0) {continue;}                   // vynechání hlavičky tabulky
         $colVals   = [];                                // řádek výstupní tabulky        
         $columnId  = 0;                                 // index sloupce (v každém řádku číslovány sloupce 0,1,2,...)
