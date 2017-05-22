@@ -86,6 +86,9 @@ foreach ($tabsIn as $tab => $cols) {
             }
             $columnId++;                                // přechod na další sloupec (buňku) v rámci řádku   
         }
+        if (!empty($colVals)) {                         // je sestaveno pole pro zápis do řádku výstupní tabulky
+            ${"out_events"} -> writeRow($colVals);      // zápis sestaveného řádku do výstupní tabulky
+        }
     }
 }      
 
