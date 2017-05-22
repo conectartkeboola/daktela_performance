@@ -78,11 +78,11 @@ foreach ($tabsIn as $tab => $cols) {
                                                 case "loginSessions":   $colVals[] = "L";           break;
                                                 case "queueSessions":   $colVals[] = "Q";           break;
                                                 case "pauseSessions":   $colVals[] = "P";
-                                            }   break;  // vlastní hodnota 'duration' nezpracovávána
+                                            }   break;  // vlastní hodnota 'duration' nezpracovávána                   
+                    case "idpause":         // if ($tab == "pauseSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;
+                                            $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "";  break;
+                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;                                            
                     case "iduser":          $colVals[] = $row[$columnId];   break; 
-                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "x";}  break;
-                    case "idpause":         if ($tab == "pauseSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "x";}  break;
-                                            // $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "";  break;                    
                 }
                 $columnId++;                            // přechod na další sloupec (buňku) v rámci řádku 
             }
