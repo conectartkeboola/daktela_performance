@@ -26,8 +26,8 @@ $tabsInArr = ["loginSessions", "pauseSessions", "queueSessions"];   // vstupní 
 $colsComm =  ["start_time", "end_time", "iduser"];                  // sloupce v poli událostí, které se vyskytují ve všech vstupních tabulkách
 
 $tabsOut = [                                                        // názvy sloupců výstupních tabulek se prefixují v kódu níže
-   "events"         => ["time", "type", "object", "iduser", "idqueue", "idpause"], 
-   "performance"    => ["time", "iduser", "idgroup", "idpause", "pause_duration", "pause_duration_countable"]
+   "events"         => ["time", "type", "object", "iduser", "idqueue", "idpause"]/*, 
+   "performance"    => ["time", "iduser", "idgroup", "idpause", "pause_duration", "pause_duration_countable"] */
 ];
 
 // typy událostí
@@ -47,10 +47,9 @@ foreach ($tabsOut as $file) {
 }
 // zápis hlaviček do výstupních souborů
 foreach ($tabsOut as $tab => $cols) {
-    $colsOut = array_key_exists($tab, $colsInOnly) ? array_diff(array_keys($cols), $colsInOnly[$tab]) : array_keys($cols);
     $colPrf  = strtolower($tab)."_";                    // prefix názvů sloupců ve výstupní tabulce (např. "performance" → "performance_")
-    $colsOut = preg_filter("/^/", $colPrf, $colsOut);   // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "time" → "performance_time")
-    ${"out_".$tab} -> writeRow($colsOut);
+    $cols = preg_filter("/^/", $colPrf, $cols);         // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "time" → "performance_time")
+    ${"out_".$tab} -> writeRow($cols);
 }
 // načtení vstupních tabulek sessions do pole událostí
 $events = [];                                           // inicializace pole událostí
