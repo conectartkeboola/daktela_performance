@@ -80,8 +80,9 @@ foreach ($tabsIn as $tab => $cols) {
                                                 case "pauseSessions":   $colVals[] = "P";
                                             }   break;  // vlastní hodnota 'duration' nezpracovávána
                     case "iduser":          $colVals[] = $row[$columnId];   break; 
-                    case "idqueue":         $colVals[] = ($tab == "queueSessions") ? $row[$columnId] : "";  break; 
-                    case "idpause":         $colVals[] = ($tab == "pauseSessions") ? $row[$columnId] : "";  break;                    
+                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;
+                    case "idpause":         if ($tab == "pauseSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;
+                                            // $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "";  break;                    
                 }
                 $columnId++;                            // přechod na další sloupec (buňku) v rámci řádku 
             }
