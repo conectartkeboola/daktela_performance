@@ -60,7 +60,7 @@ foreach ($tabsIn as $tab => $cols) {
     if (!in_array($tab, $tabsInArr)) {continue;}        // vstupní tabulky, které nebudou převáděny na pole    
     foreach (${"in_".$tab} as $rowNum => $row) {        // načítání řádků tabulky [= iterace řádků]
         if ($rowNum == 0) {continue;}                   // vynechání hlavičky tabulky
-        $colVals   = [];                                // řádek výstupní tabulky        
+        $colVals   = [];                                // řádek debugovací tabulky 'out_events'        
         $columnId  = 0;                                 // index sloupce (v každém řádku číslovány sloupce 0,1,2,...)
         foreach ($cols as $colName) {                   // konstrukce prvků pole (prvkem pole je vnořené pole) [= iterace sloupců]
             foreach ($eventTypes as $eventType) {       // z každého řádku vstupní tabulky vytvoří 2 řádky tabulky událostí (eventType = S / E)
@@ -68,20 +68,20 @@ foreach ($tabsIn as $tab => $cols) {
                     case "idloginsession":  break;      // sloupec nezpracováván
                     case "idqueuesession":  break;      // sloupec nezpracováván
                     case "idpausesession":  break;      // sloupec nezpracováván
-                    case "start_time":      if ($eventType == "S") {$events[]["time"] = $row[$columnId];}   break;
-                    case "end_time":        if ($eventType == "E") {$events[]["time"] = $row[$columnId];}   break;
+                    case "start_time":      if ($eventType == "S") {$colVals[] = $row[$columnId];}  break;
+                    case "end_time":        if ($eventType == "E") {$colVals[] = $row[$columnId];}  break;
                     case "duration":        switch ($eventType) {
-                                                case "S":               $events[]["type"]   = "S";  break;
-                                                case "E":               $events[]["type"]   = "E";
+                                                case "S":               $colVals[] = "S";           break;
+                                                case "E":               $colVals[] = "E";           break;
                                             }                        
                                             switch ($tab) {
-                                                case "loginSessions":   $events[]["object"] = "L";  break;
-                                                case "loginSessions":   $events[]["object"] = "Q";  break;
-                                                case "loginSessions":   $events[]["object"] = "P";
+                                                case "loginSessions":   $colVals[] = "L";           break;
+                                                case "loginSessions":   $colVals[] = "Q";           break;
+                                                case "loginSessions":   $colVals[] = "P";
                                             }           // vlastní hodnota 'duration' nezpracovávána
-                    case "iduser":          $events[]["iduser"]  = $row[$columnId];  break; 
-                    case "idqueue":         $events[]["idqueue"] = ($tab == "queueSessions") ? $row[$columnId] : "";    break; 
-                    case "idpause":         $events[]["idqueue"] = ($tab == "pauseSessions") ? $row[$columnId] : "";    break;                    
+                    case "iduser":          $colVals[] = $row[$columnId];  break; 
+                    case "idqueue":         $colVals[] = ($tab == "queueSessions") ? $row[$columnId] : "";  break; 
+                    case "idpause":         $colVals[] = ($tab == "pauseSessions") ? $row[$columnId] : "";  break;                    
                 }
             }
             $columnId++;                                // přechod na další sloupec (buňku) v rámci řádku   
@@ -91,6 +91,7 @@ foreach ($tabsIn as $tab => $cols) {
 
 // zápis pole událostí (events) do debugovací tabulky
 //$out_events -> writeRow($tabsOut["events"]);            // zápis hlavičky debugovací tabulky událostí
+/*
 foreach ($events as $id => $vals) {                     // $id = 0,1,2,... (nezajímavé), $ vals = 1D-pole s hodnotami řádků
     $colVals = [];                                      // inicializace řádku k zápisu
     foreach ($vals as $col => $val) {
@@ -98,4 +99,6 @@ foreach ($events as $id => $vals) {                     // $id = 0,1,2,... (neza
     }
     $out_events -> writeRow($colVals);
 }
+*/
+
 ?>
