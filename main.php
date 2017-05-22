@@ -30,6 +30,9 @@ $tabsOut = [                                                        // názvy sl
    "performance"    => ["time", "iduser", "idgroup", "idpause", "pause_duration", "pause_duration_countable"] */
 ];
 
+$tabsInList  = array_keys($tabsIn);
+$tabsOutList = array_keys($tabsOut);
+
 // typy událostí
 $eventTypes = ["S", "E"];                                           // S = start, E = end
  
@@ -38,11 +41,11 @@ $eventTypes = ["S", "E"];                                           // S = start
 
 // ==============================================================================================================================================================================================
 // načtení vstupních souborů
-foreach ($tabsIn as $file) {
+foreach ($tabsInList as $file) {
     ${"in_".$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds."in_".$file);
 }
 // vytvoření výstupních souborů
-foreach ($tabsOut as $file) {
+foreach ($tabsOutList as $file) {
     ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
 }
 // zápis hlaviček do výstupních souborů
