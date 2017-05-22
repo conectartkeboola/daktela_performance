@@ -87,11 +87,12 @@ foreach ($tabsIn as $tab => $cols) {
 }      
 
 // zápis pole událostí (events) do debugovací tabulky
-$out_events -> writeRow($tabsOut["events"]);            // zápis hlavičky debugovací tabulky událostí
+//$out_events -> writeRow($tabsOut["events"]);            // zápis hlavičky debugovací tabulky událostí
 foreach ($events as $id => $vals) {                     // $id = 0,1,2,... (nezajímavé), $ vals = 1D-pole s hodnotami řádků
     $colVals = [];                                      // inicializace řádku k zápisu
     foreach ($vals as $col => $val) {
         $colVals[]  = $val;
     }
+    $out_events -> writeRow($colVals);
 }
 ?>
