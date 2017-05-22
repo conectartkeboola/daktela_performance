@@ -59,11 +59,11 @@ $events = [];                                           // inicializace pole ud�
 foreach ($tabsIn as $tab => $cols) {
     if (!in_array($tab, $tabsInArr)) {continue;}        // vstupní tabulky, které nebudou převáděny na pole    
     foreach (${"in_".$tab} as $rowNum => $row) {        // načítání řádků tabulky [= iterace řádků]
-        if ($rowNum == 0) {continue;}                   // vynechání hlavičky tabulky
-        $colVals   = [];                                // řádek debugovací tabulky 'out_events'        
-        $columnId  = 0;                                 // index sloupce (v každém řádku číslovány sloupce 0,1,2,...)
-        foreach ($cols as $colName) {                   // konstrukce prvků pole (prvkem pole je vnořené pole) [= iterace sloupců]
-            foreach ($eventTypes as $eventType) {       // z každého řádku vstupní tabulky vytvoří 2 řádky tabulky událostí (eventType = S / E)
+        if ($rowNum == 0) {continue;}                   // vynechání hlavičky tabulky        
+        foreach ($eventTypes as $eventType) {           // z každého řádku vstupní tabulky vytvoří 2 řádky tabulky událostí (eventType = S / E)
+            $colVals   = [];                            // řádek debugovací tabulky 'out_events'        
+            $columnId  = 0;                             // index sloupce (v každém řádku číslovány sloupce 0,1,2,...)   
+            foreach ($cols as $colName) {               // konstrukce prvků pole (prvkem pole je vnořené pole) [= iterace sloupců]            
                 switch ($colName) {
                     case "idloginsession":  break;      // sloupec nezpracováván
                     case "idqueuesession":  break;      // sloupec nezpracováván
@@ -79,15 +79,15 @@ foreach ($tabsIn as $tab => $cols) {
                                                 case "loginSessions":   $colVals[] = "Q";           break;
                                                 case "loginSessions":   $colVals[] = "P";
                                             }           // vlastní hodnota 'duration' nezpracovávána
-                    case "iduser":          $colVals[] = $row[$columnId];  break; 
+                    case "iduser":          $colVals[] = $row[$columnId];   break; 
                     case "idqueue":         $colVals[] = ($tab == "queueSessions") ? $row[$columnId] : "";  break; 
                     case "idpause":         $colVals[] = ($tab == "pauseSessions") ? $row[$columnId] : "";  break;                    
                 }
             }
-            $columnId++;                                // přechod na další sloupec (buňku) v rámci řádku   
-        }
-        if (!empty($colVals)) {                         // je sestaveno pole pro zápis do řádku výstupní tabulky
-            ${"out_events"} -> writeRow($colVals);      // zápis sestaveného řádku do výstupní tabulky
+            $columnId++;                                // přechod na další sloupec (buňku) v rámci řádku 
+            if (!empty($colVals)) {                         // je sestaveno pole pro zápis do řádku výstupní tabulky
+                ${"out_events"} -> writeRow($colVals);      // zápis sestaveného řádku do výstupní tabulky    
+            }
         }
     }
 }      
