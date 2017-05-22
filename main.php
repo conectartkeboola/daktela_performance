@@ -71,12 +71,12 @@ foreach ($tabsIn as $tab => $cols) {
                     case "start_time":      if ($eventType == "+") {$colVals[] = $row[$columnId];}  break;
                     case "end_time":        if ($eventType == "-") {$colVals[] = $row[$columnId];}  break;
                     case "duration":        switch ($eventType) {
-                                                case "+":               $colVals[] = "+";
+                                                case "+":               $colVals[] = "+";           break;
                                                 case "-":               $colVals[] = "-";
                                             }                        
                                             switch ($tab) {
-                                                case "loginSessions":   $colVals[] = "L";
-                                                case "queueSessions":   $colVals[] = "Q";
+                                                case "loginSessions":   $colVals[] = "L";           break;
+                                                case "queueSessions":   $colVals[] = "Q";           break;
                                                 case "pauseSessions":   $colVals[] = "P";
                                             }   break;  // vlastní hodnota 'duration' nezpracovávána
                     case "iduser":          $colVals[] = $row[$columnId];   break; 
