@@ -26,7 +26,7 @@ $tabsInArr = ["loginSessions", "pauseSessions", "queueSessions"];   // vstupní 
 //$colsComm =  ["start_time", "end_time", "iduser"];                  // sloupce v poli událostí, které se vyskytují ve všech vstupních tabulkách
 
 $tabsOut = [                                                        // názvy sloupců výstupních tabulek se prefixují v kódu níže
-   "events"         => ["time", "type", "object", "iduser", "idqueue", "idpause"]/*, 
+   "events"         => ["time", "type", "object", "idpause", "idqueue", "iduser"]/*, 
    "performance"    => ["time", "iduser", "idgroup", "idpause", "pause_duration", "pause_duration_countable"] */
 ];
 
@@ -80,8 +80,8 @@ foreach ($tabsIn as $tab => $cols) {
                                                 case "pauseSessions":   $colVals[] = "P";
                                             }   break;  // vlastní hodnota 'duration' nezpracovávána                   
                     case "idpause":         // if ($tab == "pauseSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;
-                                            $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "";  break;
-                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;                                            
+                                            $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "x";  break;
+                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "x";}  break;                                            
                     case "iduser":          $colVals[] = $row[$columnId];   break; 
                 }
                 $columnId++;                            // přechod na další sloupec (buňku) v rámci řádku 
