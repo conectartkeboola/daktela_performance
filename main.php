@@ -79,10 +79,13 @@ foreach ($tabsIn as $tab => $cols) {
                                                 case "queueSessions":   $colVals[] = "Q";           break;
                                                 case "pauseSessions":   $colVals[] = "P";
                                             }   break;  // vlastní hodnota 'duration' nezpracovávána                   
-                    case "idpause":         // if ($tab == "pauseSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "";}  break;
-                                            $colVals[] = $tab == "pauseSessions" ? $row[$columnId] : "x";  break;
-                    case "idqueue":         if ($tab == "queueSessions") {$colVals[] = $row[$columnId];} else {$colVals[] = "x";}  break;                                            
-                    case "iduser":          $colVals[] = $row[$columnId];   break; 
+                    case "idpause":         $colVals[] = $row[$columnId];   break; 
+                    case "idqueue":         $colVals[] = $row[$columnId];   break;                                          
+                    case "iduser" :         switch ($tab) {
+                                                case "loginSessions":   $colVals[] = "";    // u tabulky loginSessions vloží před sloupec iduser 2 prázdné buňky, ...
+                                                default:                $colVals[] = "";    // ... u ostatních tabulek jednu
+                                            }
+                                            $colVals[] = $row[$columnId];
                 }
                 $columnId++;                            // přechod na další sloupec (buňku) v rámci řádku 
             }
