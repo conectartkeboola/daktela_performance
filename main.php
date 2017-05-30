@@ -13,7 +13,7 @@ $config     = json_decode(file_get_contents($configFile), true);
 
 // ==============================================================================================================================================================================================
 
-$tabsIn = ["queues", "queueSessions", "activities", "records"];     // vstupní tabulky
+$tabsIn = ["queues", "queueSessions", "pauseSessions", "activities", "records"];     // vstupní tabulky
 
 $tabsOut = [                                                        // výstupní tabulky
     "users"     => ["id", "queueSession", "pauseSession", "talkTime", "idleTime", "transactionCount", "activityTime", "callCount", "callCountAnswered"], 
@@ -243,8 +243,8 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
     }
     // zápis hlaviček do výstupních souborů
     foreach ($tabsOut as $tab => $cols) {
-        $colPrf  = strtolower($tab)."_";                // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
-        $cols    = preg_filter("/^/", $colPrf, $cols);  // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
+        $colPrf  = "report_performance_".strtolower($tab)."_";  // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
+        $cols    = preg_filter("/^/", $colPrf, $cols);          // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
         ${"out_".$tab} -> writeRow($cols);
     }
     
