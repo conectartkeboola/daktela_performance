@@ -113,7 +113,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                 if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
                 $item = json_decode($a[19], false);                 // 19-item, dekódováno z JSONu na objekt
                 if ($a[10] == 'CALL' && !empty($item)) {            // 10-type 
-                    $user["activityTime"] += (!empty($a[16]) ? Time::parse($a[16])->toUnixString() : time()) - Time::parse($a[15])->toUnixString(); // 16-time_close; 15-time_open
+                    $user["activityTime"] += (!empty($a[16]) ? strtotime($a[16]) : time()) - strtotime($a[15]); // 16-time_close; 15-time_open
                     $user["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
                     $user["callCount"]    += 1;
                     if ($item-> answered == "true") {               // parsuji answered z objektu $item
