@@ -1,5 +1,5 @@
 <?php
-// OLAP REPORTY ODVOZENÉ Z OUT-BUCKETU DAKTELA
+// PERFORMANCE REPORT ODVOZENÝ Z OUT-BUCKETU DAKTELA
 
 require_once "vendor/autoload.php";
 
@@ -12,100 +12,251 @@ $configFile = $dataDir."config.json";
 $config     = json_decode(file_get_contents($configFile), true);
 
 // ==============================================================================================================================================================================================
-// proměnné a konstanty
 
-// struktura tabulek
-$tabsIn = [
-    "loginSessions" => ["idloginsession", "start_time", "end_time", "duration", "iduser"],
-    "pauseSessions" => ["idpausesession", "start_time", "end_time", "duration", "idpause", "iduser"],
-    "queueSessions" => ["idqueuesession", "start_time", "end_time", "duration", "idqueue", "iduser"]/*,
-    "groups"        => ["idgroup", "title"],
-    "pauses"        => ["idpause", "title", "idinstance", "type", "paid"] */
-];
-$tabsInArr = ["loginSessions", "pauseSessions", "queueSessions"];   // vstupní tabulky, které budou převáděny na pole
-//$colsComm =  ["start_time", "end_time", "iduser"];                  // sloupce v poli událostí, které se vyskytují ve všech vstupních tabulkách
+$tabsIn = ["queues", "queueSessions", "activities", "records"];     // vstupní tabulky
 
-$tabsOut = [                                                        // názvy sloupců výstupních tabulek se prefixují v kódu níže
-   "events"         => ["time", "type", "object", "idpause", "idqueue", "iduser"]/*, 
-   "performance"    => ["time", "iduser", "idgroup", "idpause", "pause_duration", "pause_duration_countable"] */
-];
-
-$tabsInList  = array_keys($tabsIn);
+$tabsOut = [                                                        // výstupní tabulky
+    "users"     => ["id", "queueSession", "pauseSession", "talkTime", "idleTime", "transactionCount", "activityTime", "callCount", "callCountAnswered"], 
+    "userTimes" => ["iduser", "Q", "QA", "QAP", "QP", "P", "AP"],
+    "data"      => ["activityTime", "queueSessionTime", "pauseSessionTime", "talkTime", "callCount", "callCountAnswered", "recordsTouched", "recordsDropped",
+                    "recordsTimeout", "recordsBusy", "recordsDenied"]
+];         
 $tabsOutList = array_keys($tabsOut);
-
-// typy událostí
-$eventTypes = ["+", "-"];                                           // + = start, - = end
- 
 // ==============================================================================================================================================================================================
-// funkce
 
-// ==============================================================================================================================================================================================
 // načtení vstupních souborů
-foreach ($tabsInList as $file) {
-    ${"in_".$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds."in_".$file.".csv");
+foreach ($tabsIn as $file) {
+    ${$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds.$file.".csv");
 }
-// vytvoření výstupních souborů
-foreach ($tabsOutList as $file) {
-    ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
-}
-// zápis hlaviček do výstupních souborů
-foreach ($tabsOut as $tab => $cols) {
-    $colPrf  = strtolower($tab)."_";                    // prefix názvů sloupců ve výstupní tabulce (např. "performance" → "performance_")
-    $cols = preg_filter("/^/", $colPrf, $cols);         // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "time" → "performance_time")
-    ${"out_".$tab} -> writeRow($cols);
-}
-// načtení vstupních tabulek sessions do pole událostí
-//$events = [];                                           // inicializace pole událostí
-foreach ($tabsIn as $tab => $cols) {
-    if (!in_array($tab, $tabsInArr)) {continue;}        // vstupní tabulky, které nebudou převáděny na pole    
-    foreach (${"in_".$tab} as $rowNum => $row) {        // načítání řádků tabulky [= iterace řádků]
-        if ($rowNum == 0) {continue;}                   // vynechání hlavičky tabulky        
-        foreach ($eventTypes as $eventType) {           // z každého řádku vstupní tabulky vytvoří 2 řádky tabulky událostí (eventType = + / -)
-            $colVals   = [];                            // řádek debugovací tabulky 'out_events'        
-            $columnId  = 0;                             // index sloupce (v každém řádku číslovány sloupce 0,1,2,...)   
-            foreach ($cols as $colName) {               // konstrukce prvků pole (prvkem pole je vnořené pole) [= iterace sloupců]            
-                switch ($colName) {
-                    case "idloginsession":  break;      // sloupec nezpracováván
-                    case "idqueuesession":  break;      // sloupec nezpracováván
-                    case "idpausesession":  break;      // sloupec nezpracováván
-                    case "start_time":      if ($eventType == "+") {$colVals[] = $row[$columnId];}  break;
-                    case "end_time":        if ($eventType == "-") {$colVals[] = $row[$columnId];}  break;
-                    case "duration":        switch ($eventType) {
-                                                case "+":               $colVals[] = "+";           break;
-                                                case "-":               $colVals[] = "-";
-                                            }                        
-                                            switch ($tab) {
-                                                case "loginSessions":   $colVals[] = "L";           break;
-                                                case "queueSessions":   $colVals[] = "Q";           break;
-                                                case "pauseSessions":   $colVals[] = "P";
-                                            }   break;  // vlastní hodnota 'duration' nezpracovávána                   
-                    case "idpause":         $colVals[] = $row[$columnId];   break; 
-                    case "idqueue":         $colVals[] = $row[$columnId];   break;                                          
-                    case "iduser" :         switch ($tab) {
-                                                case "loginSessions":   $colVals[] = "";    // u tabulky loginSessions vloží před sloupec iduser 2 prázdné buňky, ...
-                                                default:                $colVals[] = "";    // ... u ostatních tabulek jednu
-                                            }
-                                            $colVals[] = $row[$columnId];
+// ==============================================================================================================================================================================================
+
+$date = is_null($date) ? date('Y-m-d') : $date;
+$events = [];
+
+//foreach ($queues as $q) {
+    //if ($q[0] == $queue) {
+        //$this->set('currentQueue', $q);
+foreach ($queues as $qNum => $q) {                                  // iterace řádků tabulky front
+        if ($qNum == 0) {continue;}                                 // vynechání hlavičky tabulky
+        $queue = $q[0];  
+    
+        if (!is_null($queue)) {
+            $users = [];                                            // inicializace pole uživatelů
+            // Get queue sessions and initiate users
+            //$page = 0;
+            //while (true) {
+            //    $queueSessions = $pbxScript->getData(3, 'queueSessions', [['field' => 'start_time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'start_time', 'value' => $date . ' 23:59:59', 'operator' => 'lte']], ['take' => 1000, 'skip' => $page * 1000]);
+            foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs) {
+                if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
+                if ($qs[4] == $queue) {                             // 4-idqueue    //if ($qs->queue->name == $queue) {
+                    if (!in_array($qs[5], array_keys($users))) {    // 5-iduser
+                        $user = [                                   // sestavení záznamu do pole uživatelů
+                            "id"                => $qs[5],          // 5-iduser
+                            "queueSession"      => 0,
+                            "pauseSession"      => 0,
+                            "talkTime"          => 0,
+                            "idleTime"          => 0,
+                            "transactionCount"  => 0,
+                            "activityTime"      => 0,
+                            "callCount"         => 0,
+                            "callCountAnswered" => 0
+                        ];
+                        $users [$qs[5]] = $user;   // $users[$qs->id_agent->name] = $user      // 5-iduser
+                        $events[$qs[5]] = [];      // $events[$qs->id_agent->name] = [];       // 5-iduser
+                    }
+                    $user["queueSession"] += (!empty($qs[2]) ? strtotime($qs[2]) : time()) - strtotime($qs[1]); // 2-end_time; 1-start_time
+                    $event1 = [
+                        "time"      =>  $qs[1],                     // 1-start_time
+                        "type"      =>  "Q",
+                        "method"    =>  "+"                   
+                    ];
+                    $event2 = [
+                        "time"      =>  !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s'),  // 2-end_time
+                        "type"      =>  "Q",
+                        "method"    =>  "-"                   
+                    ];
+                    $events[$qs[5]][] = $event1;                    // 5-iduser
+                    $events[$qs[5]][] = $event2;
                 }
-                $columnId++;                            // přechod na další sloupec (buňku) v rámci řádku 
             }
-            if (!empty($colVals)) {                     // je sestaveno pole pro zápis do řádku výstupní tabulky
-                ${"out_events"} -> writeRow($colVals);  // zápis sestaveného řádku do výstupní tabulky    
+        /*
+                if (count($queueSessions) < 1000) {
+                    break;        
+                }
+            $page++; */
+        }
+
+        // Get pause sessions
+        foreach ($users as $user) {
+            //$pauseSessions = $pbxScript->getData(3, 'pauseSessions', [['field' => 'start_time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'start_time', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'id_agent', 'value' => $user->name, 'operator' => 'eq']], ['take' => 1000]);
+            foreach ($in_pauseSessions as $psNum => $ps) {          // foreach ($pauseSessions as $ps) {
+                if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
+                $user["pauseSession"] += (!empty($ps[2]) ? strtotime($ps[2]) : time()) - strtotime($ps[1]);   // 2-end_time; 1-start_time
+                $event1 = [
+                    "time"      =>  $ps[1],                         // 1-start_time
+                    "type"      =>  "P",
+                    "method"    =>  "+"
+                ];
+                $event2 = [
+                    "time"      =>  !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s'),      // 2-end_time
+                    "type"      =>  "P",
+                    "method"    =>  "-"
+                ];
+                $events[$user[1]][] = $event1;                      // 1-iduser
+                $events[$user[1]][] = $event2;
+            }
+        }
+        // Get activities
+        foreach ($users as $user) {
+            //$activities = $pbxScript->getData(3, 'activities', [['field' => 'time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'time', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'user', 'value' => $user->name, 'operator' => 'eq']], ['take' => 1000, 'skip' => $page * 1000]);
+            foreach ($activities as $aNum => $a) {                  // foreach ($activities as $a) {
+                if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
+                $item = json_decode($a[19], false);                 // 19-item, dekódováno z JSONu na objekt
+                if ($a[10] == 'CALL' && !empty($item)) {            // 10-type 
+                    $user["activityTime"] += (!empty($a[16]) ? Time::parse($a[16])->toUnixString() : time()) - Time::parse($a[15])->toUnixString(); // 16-time_close; 15-time_open
+                    $user["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
+                    $user["callCount"]    += 1;
+                    if ($item-> answered == "true") {               // parsuji answered z objektu $item
+                        $user["callCountAnswered"] += 1;
+                    }
+                }
+                $event1 = [
+                    "time"      =>  $a[15],                         // 15-time_open
+                    "type"      =>  "A",
+                    "method"    =>  "+"                   
+                ];
+                $event2 = [
+                    "time"      =>  !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s'),      // 16-time_close
+                    "type"      =>  "A",
+                    "method"    =>  "-"                   
+                ];
+                $events[$user[1]][] = $event1;                      // 1-iduser
+                $events[$user[1]][] = $event2;
+            }
+        }
+        //Get records
+        $touched = $dropped = $timeout = $denied = $busy = 0;
+        //while (true) {
+            //$records = $pbxScript->getData(3, 'campaignsRecords', [['field' => 'edited', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'edited', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'queue', 'operator' => 'eq', 'value' => $queue]], ['take' => 1000, 'skip' => $page * 1000]);
+        foreach ($records as $rNum => $r) {
+            if (!empty($r[3]) && !empty($r[5]))       {$touched++;} // 3-idstatus; 5-idcall
+            if (!empty($r[3]) && $r[3] == '00000021') {$dropped++;} // Zavěsil zákazník         //3-idstatus
+            if (!empty($r[3]) && $r[3] == '00000122') {$timeout++;} // Zavěsil systém
+            if (!empty($r[3]) && $r[3] == '00000244') {$busy++;   } // Obsazeno
+            if (!empty($r[3]) && $r[3] == '00000261') {$denied++; } // Odmítnuto
+        }
+            //if (count($records) < 1000) {
+            //   break;
+            //}
+            //$page++;
+        //}
+        //Count totals
+        $data = [];
+        $data["activityTime"] = $data["queueSessionTime"] = $data["pauseSessionTime"] = $data["talkTime"] = $data["callCount"] = $data["callCountAnswered"] = $data["idleTime"] = $data["transactionCount"] = 0;
+        foreach ($users as $user) {
+            $data["activityTime"]     += $user["activityTime"];
+            $data["queueSessionTime"] += $user["queueSession"];
+            $data["pauseSessionTime"] += $user["pauseSession"];
+            $data["talkTime"]         += $user["talkTime"];
+            $data["callCount"]        += $user["callCount"];
+            $data["callCountAnswered"]+= $user["callCountAnswered"];
+            $data["recordsTouched"]   =  $touched;
+            $data["recordsDropped"]   =  $dropped;
+            $data["recordsTimeout"]   =  $timeout;
+            $data["recordsBusy"]      =  $busy;
+            $data["recordsDenied"]    =  $denied;
+        }
+        usort($users, function($a, $b) {
+            return $a["callCount"] < $b["callCount"];
+        });
+        //Do the events magic
+        $userTimes = [];
+        foreach ($events as $iduser => $evnts) {
+            usort($evnts, function($a, $b) {
+                return strcmp($a["time"], $b["time"]);
+            });
+            $times = [
+                "Q"         => 0,
+                "QA"        => 0,
+                "QAP"       => 0,
+                "QP"        => 0,
+                "P"         => 0,
+                "AP"        => 0
+            ];
+            $status = [
+            $lastTime = 0;
+                "Q" => false,
+                "A" => false,
+                "P" => false
+            ];
+            foreach ($evnts as $evnt) {
+                $currentTime = strtotime($evnt["time"]);
+                if ($lastTime > 0) {
+                    switch ([$status["Q"], $status["A"], $status["P"]]) {                    
+                        case [true , true , true ]:     $times["QAP"] += $currentTime - $lastTime;  break;
+                        case [true , true , false]:     $times["QA" ] += $currentTime - $lastTime;  break;
+                        case [true , false, false]:     $times["Q"  ] += $currentTime - $lastTime;  break;
+                        case [true , false, true ]:     $times["QP" ] += $currentTime - $lastTime;  break;
+                        case [false, false, true ]:     $times["P"  ] += $currentTime - $lastTime;  break;
+                        case [false, true , true ]:     $times["AP" ] += $currentTime - $lastTime;
+                        }
+                    }
+                }
+                switch ($evnt["method"]) {
+                    case "+": $status[$event["type"]] = true;   break;
+                    case "-": $status[$event["type"]] = false;
+                }    
+                $lastTime = $currentTime;
+            $userTimes[$iduser] = $times;
+        }        
+    //}
+    // Count idle time
+    foreach ($userTimes as $iduser => $times) {
+        $data["idleTime"] += $times["Q"];
+        foreach ($users as $user) {
+            if ($user["id"] == $iduser) {             // $user->name
+                $user["idleTime"] = $times["Q"];
             }
         }
     }
-}      
-
-// zápis pole událostí (events) do debugovací tabulky
-//$out_events -> writeRow($tabsOut["events"]);            // zápis hlavičky debugovací tabulky událostí
-/*
-foreach ($events as $id => $vals) {                     // $id = 0,1,2,... (nezajímavé), $ vals = 1D-pole s hodnotami řádků
-    $colVals = [];                                      // inicializace řádku k zápisu
-    foreach ($vals as $col => $val) {
-        $colVals[]  = $val;
+    /*
+    // Count transactions
+    foreach ($users as $user) {
+        //$userObject = TableRegistry::get('LogUser')->find()->where(['pbx_name' => $user->name, 'idpbxinstance' => 3])->first();
+        if (!is_null($userObject)) {
+            $user->transactionCount = TableRegistry::get('RewardTransaction')->find()->where(['idloguser' => $userObject->idloguser, 'time >=' => $date . ' 00:00:00', 'time <=' => $date . ' 23:59:59', 'type' => 'O'])->count();
+            $data->transactionCount += $user->transactionCount;
+        }
     }
-    $out_events -> writeRow($colVals);
+    
+    // Set variables
+    $this->set('users', $users);
+    $this->set('userTimes', $userTimes);
+    $this->set('data', $data);
+    $this->set('date', $date);    */
+    
+    // ==============================================================================================================================================================================================
+ 
+    // vytvoření výstupních souborů
+    foreach ($tabsOutList as $file) {
+        ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
+    }
+    // zápis hlaviček do výstupních souborů
+    foreach ($tabsOut as $tab => $cols) {
+        $colPrf  = strtolower($tab)."_";                // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
+        $cols    = preg_filter("/^/", $colPrf, $cols);  // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
+        ${"out_".$tab} -> writeRow($cols);
+    }
+    
+    // zápis záznamů do výstupních souborů       
+    foreach ($users as $usr) {
+       $out_users -> writeRow($usr);
+    }    
+    foreach ($userTimes as $iduser -> $usrTimes) {
+       $out_userTimes -> writeRow(array_merge([$iduser], $usrTimes));
+    }    
+    foreach ($data as $dt) {
+       $out_data -> writeRow($dt);
+    }     
 }
-*/
-
 ?>
