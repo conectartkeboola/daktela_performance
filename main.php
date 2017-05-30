@@ -49,7 +49,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
             foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs) {
                 if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
                 if ($qs[1] < $date.' 00:00:00' || $qs[1] > $date.' 23:59:59') {     // záznam není z aktuálního dne
-                    unset ($queueSessions[$qsNum]);
+                    //unset ($queueSessions[$qsNum]);
                     continue;
                 }
                 if ($qs[4] == $queue) {                             // 4-idqueue    //if ($qs->queue->name == $queue) {                
@@ -96,7 +96,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
             foreach ($pauseSessions as $psNum => $ps) {             // foreach ($pauseSessions as $ps) {
                 if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
                 if ($ps[1] < $date.' 00:00:00' || $ps[1] > $date.' 23:59:59') {     // záznam není z aktuálního dne
-                    unset ($pauseSessions[$psNum]);
+                    //unset ($pauseSessions[$psNum]);
                     continue;
                 }
                 $user["pauseSession"] += (!empty($ps[2]) ? strtotime($ps[2]) : time()) - strtotime($ps[1]);   // 2-end_time; 1-start_time
@@ -120,7 +120,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
             foreach ($activities as $aNum => $a) {                  // foreach ($activities as $a) {
                 if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
                 if ($a[13] < $date.' 00:00:00' || $a[13] > $date.' 23:59:59') {     // záznam není z aktuálního dne;    13-time
-                    unset ($activities[$aNum]);
+                    //unset ($activities[$aNum]);
                     continue;
                 }
                 $item = json_decode($a[19], false);                 // 19-item, dekódováno z JSONu na objekt
@@ -153,7 +153,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         foreach ($records as $rNum => $r) {
             if ($rNum == 0) {continue;}                             // vynechání hlavičky tabulky
             if ($r[6] < $date.' 00:00:00' || $r[6] > $date.' 23:59:59') {     // záznam není z aktuálního dne;  6-edited
-                    unset ($records[$rNum]);
+                    //unset ($records[$rNum]);
                     continue;
                 }
             if (!empty($r[3]) && !empty($r[5]))       {$touched++;} // 3-idstatus; 5-idcall
