@@ -89,7 +89,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         // Get pause sessions
         foreach ($users as $user) {
             //$pauseSessions = $pbxScript->getData(3, 'pauseSessions', [['field' => 'start_time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'start_time', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'id_agent', 'value' => $user->name, 'operator' => 'eq']], ['take' => 1000]);
-            foreach ($in_pauseSessions as $psNum => $ps) {          // foreach ($pauseSessions as $ps) {
+            foreach ($pauseSessions as $psNum => $ps) {             // foreach ($pauseSessions as $ps) {
                 if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
                 $user["pauseSession"] += (!empty($ps[2]) ? strtotime($ps[2]) : time()) - strtotime($ps[1]);   // 2-end_time; 1-start_time
                 $event1 = [
