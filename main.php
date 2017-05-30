@@ -183,8 +183,8 @@ foreach ($queues as $qNum => $q) {                                  // iterace Å
                 "P"         => 0,
                 "AP"        => 0
             ];
-            $status = [
             $lastTime = 0;
+            $status = [
                 "Q" => false,
                 "A" => false,
                 "P" => false
