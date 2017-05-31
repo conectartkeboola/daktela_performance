@@ -28,6 +28,16 @@ $tabsOutList = array_keys($tabsOut);
 foreach ($tabsIn as $file) {
     ${$file} = new Keboola\Csv\CsvFile($dataDir."in".$ds."tables".$ds.$file.".csv");
 }
+// vytvoření výstupních souborů
+foreach ($tabsOutList as $file) {
+    ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
+}
+// zápis hlaviček do výstupních souborů
+foreach ($tabsOut as $tab => $cols) {
+    $colPrf  = "report_performance_".strtolower($tab)."_";  // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
+    $cols    = preg_filter("/^/", $colPrf, $cols);          // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
+    ${"out_".$tab} -> writeRow($cols);
+}
 // ==============================================================================================================================================================================================
 
 $date = is_null($date) ? date('Y-m-d',(strtotime( '-1 day', strtotime(date('Y-m-d'))))) /*date('Y-m-d')*/ : $date;
@@ -252,17 +262,6 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         $this->set('date', $date);    */
 
         // ==============================================================================================================================================================================================
-
-        // vytvoření výstupních souborů
-        foreach ($tabsOutList as $file) {
-            ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
-        }
-        // zápis hlaviček do výstupních souborů
-        foreach ($tabsOut as $tab => $cols) {
-            $colPrf  = "report_performance_".strtolower($tab)."_";  // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
-            $cols    = preg_filter("/^/", $colPrf, $cols);          // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
-            ${"out_".$tab} -> writeRow($cols);
-        }
 
         // zápis záznamů do výstupních souborů       
         foreach ($users as $usr) {
