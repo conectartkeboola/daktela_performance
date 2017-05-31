@@ -270,7 +270,11 @@ foreach ($queues as $qNum => $q) {                                  // iterace Å
        $out_users -> writeRow($usr);
     }    
     foreach ($userTimes as $iduser -> $usrTimes) {
-       $out_userTimes -> writeRow(array_merge([$iduser], $usrTimes));
+       $colVals = [$iduser];
+       foreach ($usrTimes as $usrTime) {
+           $colVals[] = $usrTime;
+       } 
+       $out_userTimes -> writeRow($colVals);
     }    
     
     $out_data -> writeRow($data);   
