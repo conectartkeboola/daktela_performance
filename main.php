@@ -30,7 +30,7 @@ foreach ($tabsIn as $file) {
 }
 // ==============================================================================================================================================================================================
 
-$date = is_null($date) ? date('Y-m-d') : $date;
+$date = is_null($date) ? date('Y-m-d',(strtotime( '-1 day', strtotime(date('Y-m-d'))))) /*date('Y-m-d')*/ : $date;
 $events = [];
 
 //foreach ($queues as $q) {
