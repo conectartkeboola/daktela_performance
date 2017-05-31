@@ -88,7 +88,6 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                     break;        
                 }
             $page++; */
-        }
 
         // Get pause sessions
         foreach ($users as $user) {
@@ -226,57 +225,58 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                 $lastTime = $currentTime;
             $userTimes[$iduser] = $times;
         }        
-    //}
-    // Count idle time
-    foreach ($userTimes as $iduser => $times) {
-        $data["idleTime"] += $times["Q"];
-        foreach ($users as $user) {
-            if ($user["id"] == $iduser) {             // $user->name
-                $user["idleTime"] = $times["Q"];
+        //}
+        // Count idle time
+        foreach ($userTimes as $iduser => $times) {
+            $data["idleTime"] += $times["Q"];
+            foreach ($users as $user) {
+                if ($user["id"] == $iduser) {             // $user->name
+                    $user["idleTime"] = $times["Q"];
+                }
             }
         }
-    }
-    /*
-    // Count transactions
-    foreach ($users as $user) {
-        //$userObject = TableRegistry::get('LogUser')->find()->where(['pbx_name' => $user->name, 'idpbxinstance' => 3])->first();
-        if (!is_null($userObject)) {
-            $user->transactionCount = TableRegistry::get('RewardTransaction')->find()->where(['idloguser' => $userObject->idloguser, 'time >=' => $date . ' 00:00:00', 'time <=' => $date . ' 23:59:59', 'type' => 'O'])->count();
-            $data->transactionCount += $user->transactionCount;
+        /*
+        // Count transactions
+        foreach ($users as $user) {
+            //$userObject = TableRegistry::get('LogUser')->find()->where(['pbx_name' => $user->name, 'idpbxinstance' => 3])->first();
+            if (!is_null($userObject)) {
+                $user->transactionCount = TableRegistry::get('RewardTransaction')->find()->where(['idloguser' => $userObject->idloguser, 'time >=' => $date . ' 00:00:00', 'time <=' => $date . ' 23:59:59', 'type' => 'O'])->count();
+                $data->transactionCount += $user->transactionCount;
+            }
         }
+
+        // Set variables
+        $this->set('users', $users);
+        $this->set('userTimes', $userTimes);
+        $this->set('data', $data);
+        $this->set('date', $date);    */
+
+        // ==============================================================================================================================================================================================
+
+        // vytvoření výstupních souborů
+        foreach ($tabsOutList as $file) {
+            ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
+        }
+        // zápis hlaviček do výstupních souborů
+        foreach ($tabsOut as $tab => $cols) {
+            $colPrf  = "report_performance_".strtolower($tab)."_";  // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
+            $cols    = preg_filter("/^/", $colPrf, $cols);          // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
+            ${"out_".$tab} -> writeRow($cols);
+        }
+
+        // zápis záznamů do výstupních souborů       
+        foreach ($users as $usr) {
+           $out_users -> writeRow($usr);
+        }    
+        foreach ($userTimes as $iduser => $usrTimes) {
+           $colVals = [$iduser];
+           foreach ($usrTimes as $usrTime) {
+               $colVals[] = $usrTime;
+           } 
+           $out_userTimes -> writeRow($colVals);
+        }    
+
+        $out_data -> writeRow($data);   
     }
-    
-    // Set variables
-    $this->set('users', $users);
-    $this->set('userTimes', $userTimes);
-    $this->set('data', $data);
-    $this->set('date', $date);    */
-    
-    // ==============================================================================================================================================================================================
- 
-    // vytvoření výstupních souborů
-    foreach ($tabsOutList as $file) {
-        ${"out_".$file} = new \Keboola\Csv\CsvFile($dataDir."out".$ds."tables".$ds."out_".$file.".csv");
-    }
-    // zápis hlaviček do výstupních souborů
-    foreach ($tabsOut as $tab => $cols) {
-        $colPrf  = "report_performance_".strtolower($tab)."_";  // prefix názvů sloupců ve výstupní tabulce (např. "loginSessions" → "loginsessions_")
-        $cols    = preg_filter("/^/", $colPrf, $cols);          // prefixace názvů sloupců ve výstupních tabulkách názvy tabulek kvůli rozlišení v GD (např. "title" → "groups_title")
-        ${"out_".$tab} -> writeRow($cols);
-    }
-    
-    // zápis záznamů do výstupních souborů       
-    foreach ($users as $usr) {
-       $out_users -> writeRow($usr);
-    }    
-    foreach ($userTimes as $iduser => $usrTimes) {
-       $colVals = [$iduser];
-       foreach ($usrTimes as $usrTime) {
-           $colVals[] = $usrTime;
-       } 
-       $out_userTimes -> writeRow($colVals);
-    }    
-    
-    $out_data -> writeRow($data);   
 }
 ?>
