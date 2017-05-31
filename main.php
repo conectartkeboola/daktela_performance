@@ -269,7 +269,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace Å
     foreach ($users as $usr) {
        $out_users -> writeRow($usr);
     }    
-    foreach ($userTimes as $iduser -> $usrTimes) {
+    foreach ($userTimes as $iduser => $usrTimes) {
        $colVals = [$iduser];
        foreach ($usrTimes as $usrTime) {
            $colVals[] = $usrTime;
