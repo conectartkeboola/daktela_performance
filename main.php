@@ -48,24 +48,28 @@ $events = [];
         //$this->set('currentQueue', $q);
 foreach ($queues as $qNum => $q) {                                  // iterace řádků tabulky front
         if ($qNum == 0) {continue;}                                 // vynechání hlavičky tabulky
-        $queue = $q[0];                                             // 0-idqueue
-    
-        if (!is_null($queue)) {
+        $q_idqueue = (int)$q[0];
+                
+        //if (!is_null($q_idqueue)) {
             $users = [];                                            // inicializace pole uživatelů
             // Get queue sessions and initiate users
             //$page = 0;
             //while (true) {
             //    $queueSessions = $pbxScript->getData(3, 'queueSessions', [['field' => 'start_time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'start_time', 'value' => $date . ' 23:59:59', 'operator' => 'lte']], ['take' => 1000, 'skip' => $page * 1000]);
-            foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs) {
+            foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
                 if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
-                if ($qs[1] < $date.' 00:00:00' || $qs[1] > $date.' 23:59:59') {     // záznam není z aktuálního dne
-                    //unset ($queueSessions[$qsNum]);
+                $qs_start_time = $qs[1];
+                $qs_end_time   = $qs[2];
+                $qs_idqueue    = (int)$qs[4];
+                $qs_iduser     = (int)$qs[5];
+                
+                if ($qs_start_time < $date.' 00:00:00' || $qs_start_time > $date.' 23:59:59') {     // záznam není z minulého dne
                     continue;
                 }
-                if ($qs[4] == $queue) {                             // 4-idqueue    //if ($qs->queue->name == $queue) {                
+                if ($qs_idqueue == $q_idqueue) {                    //if ($qs->queue->name == $queue)             
                     if (!in_array($qs[5], array_keys($users))) {    // 5-iduser
                         $user = [                                   // sestavení záznamu do pole uživatelů
-                            "id"                => $qs[5],          // 5-iduser
+                            "id"                => $qs_iduser,
                             "queueSession"      => 0,
                             "pauseSession"      => 0,
                             "talkTime"          => 0,
@@ -75,22 +79,22 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                             "callCount"         => 0,
                             "callCountAnswered" => 0
                         ];
-                        $users [$qs[5]] = $user;   // $users[$qs->id_agent->name] = $user      // 5-iduser
-                        $events[$qs[5]] = [];      // $events[$qs->id_agent->name] = [];       // 5-iduser
+                        $users [$qs_iduser] = $user;                // $users[$qs->id_agent->name] = $user
+                        $events[$qs_iduser] = [];                   // $events[$qs->id_agent->name] = [];
                     }
-                    $user["queueSession"] += (!empty($qs[2]) ? strtotime($qs[2]) : time()) - strtotime($qs[1]); // 2-end_time; 1-start_time
+                    $user["queueSession"] += (!empty($qs_end_time) ? strtotime($qs_end_time) : time()) - strtotime($qs_start_time);
                     $event1 = [
-                        "time"      =>  $qs[1],                     // 1-start_time
+                        "time"      =>  $qs_start_time,
                         "type"      =>  "Q",
                         "method"    =>  "+"                   
                     ];
                     $event2 = [
-                        "time"      =>  !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s'),  // 2-end_time
+                        "time"      =>  !empty($qs_end_time) ? $$qs_end_time : date('Y-m-d H:i:s'),
                         "type"      =>  "Q",
                         "method"    =>  "-"                   
                     ];
-                    $events[$qs[5]][] = $event1;                    // 5-iduser
-                    $events[$qs[5]][] = $event2;
+                    $events[$qs_iduser][] = $event1; 
+                    $events[$qs_iduser][] = $event2; 
                 }
             }
         /*
@@ -104,18 +108,20 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
             //$pauseSessions = $pbxScript->getData(3, 'pauseSessions', [['field' => 'start_time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'start_time', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'id_agent', 'value' => $user->name, 'operator' => 'eq']], ['take' => 1000]);
             foreach ($pauseSessions as $psNum => $ps) {             // foreach ($pauseSessions as $ps) {
                 if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
-                if ($ps[1] < $date.' 00:00:00' || $ps[1] > $date.' 23:59:59') {     // záznam není z aktuálního dne
-                    //unset ($pauseSessions[$psNum]);
+                $ps_start_time = $ps[1];
+                $ps_end_time   = $ps[2];
+                
+                if ($ps_start_time < $date.' 00:00:00' || $ps_start_time > $date.' 23:59:59') {     // záznam není z minulého dne
                     continue;
                 }
-                $user["pauseSession"] += (!empty($ps[2]) ? strtotime($ps[2]) : time()) - strtotime($ps[1]);   // 2-end_time; 1-start_time
+                $user["pauseSession"] += (!empty($ps_end_time) ? strtotime($ps_end_time) : time()) - strtotime($ps_start_time);
                 $event1 = [
-                    "time"      =>  $ps[1],                         // 1-start_time
+                    "time"      =>  $ps_start_time,
                     "type"      =>  "P",
                     "method"    =>  "+"
                 ];
                 $event2 = [
-                    "time"      =>  !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s'),      // 2-end_time
+                    "time"      =>  !empty($ps_end_time) ? $ps_end_time : date('Y-m-d H:i:s'),
                     "type"      =>  "P",
                     "method"    =>  "-"
                 ];
@@ -127,14 +133,19 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         foreach ($users as $user) {
             //$activities = $pbxScript->getData(3, 'activities', [['field' => 'time', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'time', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'user', 'value' => $user->name, 'operator' => 'eq']], ['take' => 1000, 'skip' => $page * 1000]);
             foreach ($activities as $aNum => $a) {                  // foreach ($activities as $a) {
-                if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
-                if ($a[13] < $date.' 00:00:00' || $a[13] > $date.' 23:59:59') {     // záznam není z aktuálního dne;    13-time
-                    //unset ($activities[$aNum]);
+                if ($aNum == 0) {continue;}                         // vynechání hlavičky tabulky
+                $a_time       = $a[13];
+                $a_type       = $a[10];
+                $a_time_open  = $a[15];
+                $a_time_close = $a[16];
+                $a_item       = $a[19];
+                $item         = json_decode($a_item, false);        // dekódováno z JSONu na objekt                
+                
+                if ($a_time < $date.' 00:00:00' || $a_time > $date.' 23:59:59') {                   // záznam není z minulého dne
                     continue;
-                }
-                $item = json_decode($a[19], false);                 // 19-item, dekódováno z JSONu na objekt
-                if ($a[10] == 'CALL' && !empty($item)) {            // 10-type 
-                    $user["activityTime"] += (!empty($a[16]) ? strtotime($a[16]) : time()) - strtotime($a[15]); // 16-time_close; 15-time_open
+                }               
+                if ($a_type == 'CALL' && !empty($item)) {
+                    $user["activityTime"] += (!empty($a_time_close) ? strtotime($a_time_close) : time()) - strtotime($a_time_open);
                     $user["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
                     $user["callCount"]    += 1;
                     if ($item-> answered == "true") {               // parsuji answered z objektu $item
@@ -142,12 +153,12 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                     }
                 }
                 $event1 = [
-                    "time"      =>  $a[15],                         // 15-time_open
+                    "time"      =>  $a_time_open,
                     "type"      =>  "A",
                     "method"    =>  "+"                   
                 ];
                 $event2 = [
-                    "time"      =>  !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s'),      // 16-time_close
+                    "time"      =>  !empty($a_time_close) ? $a_time_close : date('Y-m-d H:i:s'),
                     "type"      =>  "A",
                     "method"    =>  "-"                   
                 ];
@@ -161,15 +172,18 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
             //$records = $pbxScript->getData(3, 'campaignsRecords', [['field' => 'edited', 'value' => $date . ' 00:00:00', 'operator' => 'gte'], ['field' => 'edited', 'value' => $date . ' 23:59:59', 'operator' => 'lte'], ['field' => 'queue', 'operator' => 'eq', 'value' => $queue]], ['take' => 1000, 'skip' => $page * 1000]);
         foreach ($records as $rNum => $r) {
             if ($rNum == 0) {continue;}                             // vynechání hlavičky tabulky
-            if ($r[6] < $date.' 00:00:00' || $r[6] > $date.' 23:59:59') {     // záznam není z aktuálního dne;  6-edited
-                    //unset ($records[$rNum]);
+            $r_edited   = $r[6];
+            $r_idstatus = $r[3];
+            $r_idcall   = $r[5];
+            
+            if ($r_edited < $date.' 00:00:00' || $r_edited > $date.' 23:59:59') {                   // záznam není z minulého dne
                     continue;
                 }
-            if (!empty($r[3]) && !empty($r[5]))       {$touched++;} // 3-idstatus; 5-idcall
-            if (!empty($r[3]) && $r[3] == '00000021') {$dropped++;} // Zavěsil zákazník         //3-idstatus
-            if (!empty($r[3]) && $r[3] == '00000122') {$timeout++;} // Zavěsil systém
-            if (!empty($r[3]) && $r[3] == '00000244') {$busy++;   } // Obsazeno
-            if (!empty($r[3]) && $r[3] == '00000261') {$denied++; } // Odmítnuto
+            if (!empty($r_idstatus) && !empty($r_idcall))         {$touched++;}
+            if (!empty($r_idstatus) && $r_idstatus == '00000021') {$dropped++;}     // Zavěsil zákazník
+            if (!empty($r_idstatus) && $r_idstatus == '00000122') {$timeout++;}     // Zavěsil systém
+            if (!empty($r_idstatus) && $r_idstatus == '00000244') {$busy++;   }     // Obsazeno
+            if (!empty($r_idstatus) && $r_idstatus == '00000261') {$denied++; }     // Odmítnuto
         }
             //if (count($records) < 1000) {
             //   break;
@@ -227,13 +241,13 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                         case [false, true , true ]:     $times["AP" ] += $currentTime - $lastTime;
                         }
                     }
-                }
-                switch ($evnt["method"]) {
-                    case "+": $status[$event["type"]] = true;   break;
-                    case "-": $status[$event["type"]] = false;
-                }    
-                $lastTime = $currentTime;
-            $userTimes[$iduser] = $times;
+            }
+            switch ($evnt["method"]) {
+                case "+": $status[$evnt["type"]] = true;   break;
+                case "-": $status[$evnt["type"]] = false;
+            }    
+            $lastTime = $currentTime;
+            $userTimes[$user["id"]] = $times;
         }        
         //}
         // Count idle time
@@ -281,6 +295,6 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         }    
 
         $out_data -> writeRow($data);   
-    }
+    //}
 }
 ?>
