@@ -40,7 +40,7 @@ foreach ($tabsOut as $tab => $cols) {
 }
 // ==============================================================================================================================================================================================
 
-$date = is_null($date) ? date('Y-m-d',(strtotime( '-1 day', strtotime(date('Y-m-d'))))) /*date('Y-m-d')*/ : $date;
+$date = date('Y-m-d',(strtotime('-1 day', strtotime(date('Y-m-d')))));
 $events = [];
 
 //foreach ($queues as $q) {
@@ -89,7 +89,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace Å
                         "method"    =>  "+"                   
                     ];
                     $event2 = [
-                        "time"      =>  !empty($qs_end_time) ? $$qs_end_time : date('Y-m-d H:i:s'),
+                        "time"      =>  !empty($qs_end_time) ? $qs_end_time : date('Y-m-d H:i:s'),
                         "type"      =>  "Q",
                         "method"    =>  "-"                   
                     ];
