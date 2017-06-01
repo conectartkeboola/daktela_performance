@@ -292,9 +292,8 @@ foreach ($queues as $qNum => $q) {                                  // iterace Å
                $times["AP"]
             ];
             $out_userTimes -> writeRow($colVals);
-        }    
-
-        $out_data -> writeRow($data);   
+        }         
     //}
 }
+$out_data -> writeRow($data);   
 ?>
