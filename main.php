@@ -48,7 +48,7 @@ $events = [];
         //$this->set('currentQueue', $q);
 foreach ($queues as $qNum => $q) {                                  // iterace řádků tabulky front
         if ($qNum == 0) {continue;}                                 // vynechání hlavičky tabulky
-        $queue = $q[0];  
+        $queue = $q[0];                                             // 0-idqueue
     
         if (!is_null($queue)) {
             $users = [];                                            // inicializace pole uživatelů
@@ -119,8 +119,8 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                     "type"      =>  "P",
                     "method"    =>  "-"
                 ];
-                $events[$user[1]][] = $event1;                      // 1-iduser
-                $events[$user[1]][] = $event2;
+                $events[$user["id"]][] = $event1;
+                $events[$user["id"]][] = $event2;
             }
         }
         // Get activities
@@ -151,8 +151,8 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                     "type"      =>  "A",
                     "method"    =>  "-"                   
                 ];
-                $events[$user[1]][] = $event1;                      // 1-iduser
-                $events[$user[1]][] = $event2;
+                $events[$user["id"]][] = $event1;
+                $events[$user["id"]][] = $event2;
             }
         }
         //Get records
