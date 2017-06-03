@@ -67,7 +67,7 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                     continue;
                 }
                 if ($qs_idqueue == $q_idqueue) {                    //if ($qs->queue->name == $queue)             
-                    if (!in_array($qs[5], array_keys($users))) {    // 5-iduser
+                    if (!in_array($qs_iduser, array_keys($users))) {// 5-iduser
                         $user = [                                   // sestavení záznamu do pole uživatelů
                             "id"                => $qs_iduser,
                             "queueSession"      => 0,
@@ -241,12 +241,12 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                         case [false, true , true ]:     $times["AP" ] += $currentTime - $lastTime;
                         }
                     }
-            }
             switch ($evnt["method"]) {
                 case "+": $status[$evnt["type"]] = true;   break;
                 case "-": $status[$evnt["type"]] = false;
             }    
             $lastTime = $currentTime;
+            }
             $userTimes[$user["id"]] = $times;
         }        
         //}
@@ -278,11 +278,27 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
         // ==============================================================================================================================================================================================
 
         // zápis záznamů do výstupních souborů       
-        foreach ($users as $usr) {
-           $out_users -> writeRow($usr);
+        $us_colVals = $ut_colVals = [];
+        
+        foreach ($users as $user) {
+            /*$us_colVals = [
+                $user["id"],
+                $user["queueSession"],
+                $user["pauseSession"],
+                $user["talkTime"],
+                $user["idleTime"],
+                $user["transactionCount"],
+                $user["activityTime"],
+                $user["callCount"],
+                $user["callCountAnswered"]
+            ];*/
+            foreach ($user as $attrVal) {
+                $us_colVals[] = $attrVal;
+            }
+           $out_users -> writeRow($us_colVals);
         }    
         foreach ($userTimes as $iduser => $times) {
-            $colVals = [
+            /*$ut_colVals = [
                $iduser,
                $times["Q"],
                $times["QA"],
@@ -290,10 +306,19 @@ foreach ($queues as $qNum => $q) {                                  // iterace �
                $times["QP"],
                $times["P"],
                $times["AP"]
-            ];
-            $out_userTimes -> writeRow($colVals);
+            ];*/
+            $ut_colVals[] = $iduser;
+            foreach ($user as $attrVal) {
+                $ut_colVals[] = $attrVal;
+            }
+            $out_userTimes -> writeRow($ut_colVals);
         }         
     //}
 }
-$out_data -> writeRow($data);   
+$da_colVals = [];
+foreach ($data as $datVal) {
+    $da_colVals[] = $datVal;
+}
+$out_data -> writeRow($da_colVals);   
+
 ?>
