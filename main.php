@@ -376,7 +376,7 @@ foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $counters) {
             $colVals = [$date, $idgroup];
-            foreach ($user as $attrVal) {
+            foreach ($counters as $attrVal) {
                 $colVals[] = $attrVal;
             }
             $out_users -> writeRow($colVals);
