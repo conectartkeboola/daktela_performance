@@ -55,7 +55,7 @@ foreach ($tabsOut as $tab => $cols) {
 // funkce
 
 function initUsersAndEventsItems ($date, $iduser, $idgroup = "") {
-    global $users;
+    global $users, $events;
     
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
