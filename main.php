@@ -52,6 +52,82 @@ foreach ($tabsOut as $tab => $cols) {
     ${"out_".$tab} -> writeRow($cols);
 }
 // ==============================================================================================================================================================================================
+// funkce
+
+function initUsersAndEventsItems ($date, $iduser, $idgroup = "") {
+    global $users;
+    
+    // inicializace záznamů do pole uživatelů
+    if (!array_key_exists($date, $users)) {
+        $users[$date] = [];
+    }
+    if (!array_key_exists($iduser, $users[$date])) {
+        $users[$date][$iduser] = [];
+    }
+    if (!empty($idgroup) && !array_key_exists($idgroup, $users[$date][$iduser])) {
+        $user = [                                   // sestavení záznamu do pole uživatelů
+            "iduser"            => $qs_iduser,
+            "Q"                 => 0,
+            "QA"                => 0,
+            "QAP"               => 0,
+            "QP"                => 0,
+            "P"                 => 0,
+            "AP"                => 0,
+            "queueSession"      => 0,
+            "pauseSession"      => "",              // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+            "talkTime"          => 0,
+            "idleTime"          => 0,                            
+            "activityTime"      => 0,
+            "callCount"         => 0,
+            "callCountAnswered" => 0,
+            //"transactionCount"  => 0,
+            "recordsTouched"    => 0,
+            "recordsDropped"    => 0,
+            "recordsTimeout"    => 0,
+            "recordsBusy"       => 0,
+            "recordsDenied"     => 0
+        ];
+        $users[$date][$iduser][$idgroup] = $user;
+    }
+    if (!array_key_exists("", $users[$date][$iduser])) {
+        $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
+            "iduser"            => $qs_iduser,
+            "Q"                 => "",
+            "QA"                => "",
+            "QAP"               => "",
+            "QP"                => "",
+            "P"                 => "",
+            "AP"                => "",
+            "queueSession"      => "",
+            "pauseSession"      => 0,               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+            "talkTime"          => "",
+            "idleTime"          => "",                            
+            "activityTime"      => "",
+            "callCount"         => "",
+            "callCountAnswered" => "",
+            //"transactionCount"  => "",
+            "recordsTouched"    => "",
+            "recordsDropped"    => "",
+            "recordsTimeout"    => "",
+            "recordsBusy"       => "",
+            "recordsDenied"     => ""
+        ];
+        $users[$date][$iduser][""] = $userForPS;
+    }
+    
+    // inicializace záznamů do pole událostí
+    if (!array_key_exists($date, $events)) {
+        $events[$date] = [];
+    }
+    if (!array_key_exists($iduser, $events[$date])) {
+        $events[$date][$iduser] = [];
+    }
+    if (!array_key_exists($idgroup, $events[$date][$iduser])) {
+        $events[$date][$iduser][$idgroup] = [];
+    }
+}
+
+// ==============================================================================================================================================================================================
 
 $users = $events = [];                                      // inicializace polí
 
@@ -68,6 +144,9 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
             break;
         }
     }
+    
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
+    // iterace queueSessions
             
     foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
         if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
@@ -88,61 +167,8 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         
         while ($processed_date <= $qs_end_date) {
             
-            if (!in_array($processed_date, array_keys($users))) {
-                $users[$processed_date] = [];
-            }
-            if (!in_array($qs_iduser, array_keys($users[$processed_date]))) {
-                $users[$processed_date][$qs_iduser] = [];
-            }
-            if (!in_array($idgroup, array_keys($users[$processed_date][$qs_iduser]))) {
-                $user = [                                   // sestavení záznamu do pole uživatelů
-                    "iduser"            => $qs_iduser,
-                    "Q"                 => 0,
-                    "QA"                => 0,
-                    "QAP"               => 0,
-                    "QP"                => 0,
-                    "P"                 => 0,
-                    "AP"                => 0,
-                    "queueSession"      => 0,
-                    "pauseSession"      => "",              // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
-                    "talkTime"          => 0,
-                    "idleTime"          => 0,                            
-                    "activityTime"      => 0,
-                    "callCount"         => 0,
-                    "callCountAnswered" => 0,
-                    //"transactionCount"  => 0,
-                    "recordsTouched"    => 0,
-                    "recordsDropped"    => 0,
-                    "recordsTimeout"    => 0,
-                    "recordsBusy"       => 0,
-                    "recordsDenied"     => 0
-                ];
-                $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
-                    "iduser"            => $qs_iduser,
-                    "Q"                 => "",
-                    "QA"                => "",
-                    "QAP"               => "",
-                    "QP"                => "",
-                    "P"                 => "",
-                    "AP"                => "",
-                    "queueSession"      => "",
-                    "pauseSession"      => 0,               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
-                    "talkTime"          => "",
-                    "idleTime"          => "",                            
-                    "activityTime"      => "",
-                    "callCount"         => "",
-                    "callCountAnswered" => "",
-                    //"transactionCount"  => "",
-                    "recordsTouched"    => "",
-                    "recordsDropped"    => "",
-                    "recordsTimeout"    => "",
-                    "recordsBusy"       => "",
-                    "recordsDenied"     => ""
-                ];
-                $users [$processed_date][$qs_iduser][$idgroup] = $user;     // zápis záznamu do pole uživatelů
-                $users [$processed_date][$qs_iduser][""] = $userForPS;      // zápis záznamu do pole uživatelů
-                $events[$processed_date][$qs_iduser][$idgroup] = [];        // inicializace záznamu do pole událostí
-            }
+            initUsersAndEventsItems ($processed_date, $qs_iduser, $idgroup);
+            
             $qs_start_time =  max($qs_start_time, $processed_date.' 00:00:00'); 
             $qs_end_time   =  min($qs_end_time  , $processed_date.' 23:59:59');
             
@@ -190,6 +216,8 @@ foreach ($users as $date => $daysByUserGroup) {
             $processed_date = $ps_start_date;
 
             while ($processed_date <= $ps_end_date) {
+                
+                initUsersAndEventsItems ($processed_date, $ps_iduser, "");
 
                 $ps_start_time =  max($ps_start_time, $processed_date.' 00:00:00'); 
                 $ps_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
@@ -251,6 +279,8 @@ foreach ($users as $date => $daysByUserGroup) {
                 $processed_date = $a_date;
 
                 while ($processed_date <= $a_date_close) {
+                    
+                    initUsersAndEventsItems ($processed_date, $a_iduser, $idgroup);
 
                     $a_time_open  =  max($a_time_open,  $processed_date.' 00:00:00'); 
                     $a_time_close =  min($a_time_close, $processed_date.' 23:59:59');
@@ -296,6 +326,8 @@ foreach ($users as $date => $daysByUserGroup) {
                                                                 // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
                 // záznam je ze zkoumaného časového rozsahu
+                initUsersAndEventsItems ($r_edited_date, $r_iduser, $idgroup);
+                
                 if (!empty($r_idstatus) && !empty($r_idcall))         { $users[$date][$iduser][$idgroup]["recordsTouched"] ++; }
                 if (!empty($r_idstatus) && $r_idstatus == '00000021') { $users[$date][$iduser][$idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
                 if (!empty($r_idstatus) && $r_idstatus == '00000122') { $users[$date][$iduser][$idgroup]["recordsTimeout"] ++; } // Zavěsil systém
