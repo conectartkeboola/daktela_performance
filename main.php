@@ -19,7 +19,7 @@ $reportIntervHistDays = $config['parameters']['reportIntervHistDays'];          
 $tabsIn = ["groups", "queues", "queueSessions", "pauseSessions", "activities", "records"];    // vstupní tabulky
 
 $tabsOut = [                                                                        // výstupní tabulky
-    "users"     =>  ["date", "idgroup","iduser", "Q", "QA", "QAP", "QP", "P", "AP", "queueSession", "pauseSession",
+    "users"     =>  ["date", "idgroup", "iduser", "Q", "QA", "QAP", "QP", "P", "AP", "queueSession", "pauseSession",
                      "talkTime", "idleTime", "activityTime", "callCount", "callCountAnswered", /*"transactionCount",*/
                      "recordsTouched", "recordsDropped", "recordsTimeout", "recordsBusy", "recordsDenied"],
     "events"    =>  ["idgroup", "iduser", "time", "type", "method"]
@@ -58,6 +58,7 @@ $users = $events = [];                                      // inicializace pol�
 foreach ($queues as $qNum => $q) {                          // iterace řádků tabulky front
     if ($qNum == 0) {continue;}                             // vynechání hlavičky tabulky
     $q_idqueue = $q[0];
+    $q_idgroup = $q[3];
     
     foreach ($groups as $gNum => $g) {                      // přiřazení skupiny k frontě
         if ($gNum == 0) {continue;}                         // vynechání hlavičky tabulky
@@ -90,10 +91,11 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
             if (!in_array($processed_date, array_keys($users))) {
                 $users[$processed_date] = [];
             }
-            if (!in_array($idgroup, array_keys($users[$processed_date]))) {
-                $users[$processed_date][$idgroup] = [];
+            if (!in_array($qs_iduser, array_keys($users[$processed_date]))) {
+                $users[$processed_date][$qs_iduser] = [];
+                $users[$processed_date][""][$qs_iduser]= 0; // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
             }
-            if (!in_array($qs_iduser, array_keys($users[$processed_date][$idgroup]))) {
+            if (!in_array($idgroup, array_keys($users[$processed_date][$qs_iduser]))) {
                 $user = [                                   // sestavení záznamu do pole uživatelů
                     "iduser"            => $qs_iduser,
                     "Q"                 => 0,
@@ -103,7 +105,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     "P"                 => 0,
                     "AP"                => 0,
                     "queueSession"      => 0,
-                    "pauseSession"      => 0,
+                    "pauseSession"      => "",              // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
                     "talkTime"          => 0,
                     "idleTime"          => 0,                            
                     "activityTime"      => 0,
@@ -116,14 +118,15 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     "recordsBusy"       => 0,
                     "recordsDenied"     => 0
                 ];
-                $users [$processed_date][$idgroup][$qs_iduser] = $user; // zápis záznamu do pole uživatelů
-                $events[$processed_date][$idgroup][$qs_iduser] = [];    // inicializace záznamu do pole událostí
+                $users [$processed_date][$qs_iduser][$idgroup] = $user;     // zápis záznamu do pole uživatelů
+                $users [$processed_date][$qs_iduser][""] = 0;               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+                $events[$processed_date][$qs_iduser][$idgroup] = [];        // inicializace záznamu do pole událostí
             }
             $qs_start_time =  max($qs_start_time, $processed_date.' 00:00:00'); 
             $qs_end_time   =  min($qs_end_time  , $processed_date.' 23:59:59');
             
             if ($qs_end_time > $qs_start_time) {            // eliminace nevalidních případů 
-                $users[$processed_date][$idgroup][$qs_iduser]["queueSession"] += strtotime($qs_end_time) - strtotime($qs_start_time);
+                $users[$processed_date][$qs_iduser][$idgroup]["queueSession"] += strtotime($qs_end_time) - strtotime($qs_start_time);
                 $event1 = [
                     "time"      =>  $qs_start_time,
                     "type"      =>  "Q",
@@ -134,8 +137,8 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     "type"      =>  "Q",
                     "method"    =>  "-"                   
                 ];
-                $events[$processed_date][$idgroup][$qs_iduser][] = $event1; 
-                $events[$processed_date][$idgroup][$qs_iduser][] = $event2;// zápis záznamů do pole událostí
+                $events[$processed_date][$qs_iduser][$idgroup][] = $event1; 
+                $events[$processed_date][$qs_iduser][$idgroup][] = $event2;// zápis záznamů do pole událostí
             }
             $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
         }
@@ -144,53 +147,65 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 // ==============================================================================================================================================================================================
 // Get pause sessions + activities + records
 
-foreach ($users as $date => $usersByGroupDay) {
-  
-    foreach ($usersByGroupDay as $idgroup => $usersByDay) {
+foreach ($users as $date => $daysByUserGroup) {
 
-        foreach ($usersByDay as $iduser => $usr) {
-            
-            // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
-            // Get pause sessions
-            foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
-                if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
-                $ps_start_time = $ps[1];
-                $ps_end_time   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
-                $ps_iduser     = $ps[5];
+    foreach ($daysByUserGroup as $iduser => $daysByGroup) {   
 
-                $ps_start_date = substr($ps_start_time, 0, 10);
-                $ps_end_date   = substr($ps_end_time,   0, 10);
+        // Get pause sessions   (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
 
-                if ($ps_start_date != $date  ||  $ps_iduser != $iduser) {continue;}
-                                                                // pauseSession není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
+        foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
+            if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
+            $ps_start_time = $ps[1];
+            $ps_end_time   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
+            $ps_iduser     = $ps[5];
 
-                // queueSession je ze zkoumaného časového rozsahu -> cyklus generující pauseSessions pro všechny dny, po které trvala reálná pauseSession
-                $processed_date = $ps_start_date;
+            $ps_start_date = substr($ps_start_time, 0, 10);
+            $ps_end_date   = substr($ps_end_time,   0, 10);
 
-                while ($processed_date <= $ps_end_date) {
+            if ($ps_start_date != $date  ||  $ps_iduser != $iduser) {continue;}
+                                                            // pauseSession není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
 
-                    $ps_start_time =  max($ps_start_time, $processed_date.' 00:00:00'); 
-                    $ps_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
+            // queueSession je ze zkoumaného časového rozsahu -> cyklus generující pauseSessions pro všechny dny, po které trvala reálná pauseSession
+            $processed_date = $ps_start_date;
 
-                    if ($ps_end_time <= $ps_start_time) {       // eliminace nevalidních případů 
-                        $users[$processed_date][$idgroup][$iduser]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
-                        $event1 = [
-                            "time"      =>  $ps_start_time,
-                            "type"      =>  "P",
-                            "method"    =>  "+"
-                        ];
-                        $event2 = [
-                            "time"      =>  $ps_end_time,
-                            "type"      =>  "P",
-                            "method"    =>  "-"
-                        ];
-                        $events[$processed_date][$idgroup][$iduser][] = $event1;
-                        $events[$processed_date][$idgroup][$iduser][] = $event2;
-                    }
-                    $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
+            while ($processed_date <= $ps_end_date) {
+
+                $ps_start_time =  max($ps_start_time, $processed_date.' 00:00:00'); 
+                $ps_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
+
+                if ($ps_end_time <= $ps_start_time) {       // eliminace nevalidních případů 
+                    $users[$processed_date][""][$idgroup]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
+                                                            // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
+                    $event1 = [
+                        "time"      =>  $ps_start_time,
+                        "type"      =>  "P",
+                        "method"    =>  "+"
+                    ];
+                    $event2 = [
+                        "time"      =>  $ps_end_time,
+                        "type"      =>  "P",
+                        "method"    =>  "-"
+                    ];
+                    $events[$processed_date][""][$idgroup][] = $event1;
+                    $events[$processed_date][""][$idgroup][] = $event2;                                 // [""] ... prázdná skupina
                 }
-            }                                            
-            // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
+                $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
+            }
+        }        
+        // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
+
+        foreach ($daysByGroup as $idgroup => $day) {
+            
+            foreach ($queues as $qNum => $q) {                  // přiřazení fronty ke skupině
+                if ($qNum == 0) {continue;}                     // vynechání hlavičky tabulky
+                $q_idqueue = $q[0];
+                $q_idgroup = $q[3];
+                if ($q_idgroup != $idgroup) {
+                    $idqueue = $q_idqueue;
+                    break;
+                }
+            }
+                                                
             // Get activities
 
             foreach ($activities as $aNum => $a) {
@@ -208,8 +223,8 @@ foreach ($users as $date => $usersByGroupDay) {
                 $a_date_open  = substr($a_time_open,  0, 10);
                 $a_date_close = substr($a_time_close, 0, 10);
 
-                if ($a_date != $date  ||  $a_iduser != $iduser) {continue;}
-                                                                // aktivita není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
+                if ($a_date != $date  ||  $a_idqueue != $idqueue  ||  $a_iduser != $iduser) {continue;}
+                                                                // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
                 // aktivita je ze zkoumaného časového rozsahu-> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
                 $processed_date = $a_date;
@@ -221,11 +236,11 @@ foreach ($users as $date => $usersByGroupDay) {
 
                     if ($a_time_close <= $a_time_open) {        // eliminace nevalidních případů 
                         if ($a_type == 'CALL' && !empty($item)) {
-                            $users[$processed_date][$idgroup][$iduser]["activityTime"] += strtotime($a_time_close) - strtotime($a_time_open);
-                            $users[$processed_date][$idgroup][$iduser]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
-                            $users[$processed_date][$idgroup][$iduser]["callCount"]    += 1;
+                            $users[$processed_date][$iduser][$idgroup]["activityTime"] += strtotime($a_time_close) - strtotime($a_time_open);
+                            $users[$processed_date][$iduser][$idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
+                            $users[$processed_date][$iduser][$idgroup]["callCount"]    += 1;
                             if ($item-> answered == "true") {           // parsuji answered z objektu $item
-                                $users[$a_date][$idgroup][$iduser]["callCountAnswered"] += 1;
+                                $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                             }
                         }
                         $event1 = [
@@ -238,8 +253,8 @@ foreach ($users as $date => $usersByGroupDay) {
                             "type"      =>  "A",
                             "method"    =>  "-"                   
                         ];
-                        $events[$processed_date][$idgroup][$iduser][] = $event1;
-                        $events[$processed_date][$idgroup][$iduser][] = $event2;
+                        $events[$processed_date][$iduser][$idgroup][] = $event1;
+                        $events[$processed_date][$iduser][$idgroup][] = $event2;
                     }
                     $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
                 }
@@ -249,21 +264,22 @@ foreach ($users as $date => $usersByGroupDay) {
 
             foreach ($records as $rNum => $r) {
                 if ($rNum == 0) {continue;}                     // vynechání hlavičky tabulky
-                $r_iduser  = $r[1];
+                $r_iduser   = $r[1];
+                $r_idqueue  = $r[2];
                 $r_edited   = $r[6];
                 $r_idstatus = $r[3];
                 $r_idcall   = $r[5];            
                 $r_edited_date = substr($r_edited, 0, 10);
 
-                if ($r_edited_date != $date  ||  $r_iduser != $iduser) {continue;} 
-                                                                // záznam není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
+                if ($r_edited_date != $date  ||  $r_idqueue != $idqueue  ||  $r_iduser != $iduser) {continue;} 
+                                                                // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
                 // záznam je ze zkoumaného časového rozsahu
-                if (!empty($r_idstatus) && !empty($r_idcall))         { $users[$date][$idgroup]["recordsTouched"] ++; }
-                if (!empty($r_idstatus) && $r_idstatus == '00000021') { $users[$date][$idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
-                if (!empty($r_idstatus) && $r_idstatus == '00000122') { $users[$date][$idgroup]["recordsTimeout"] ++; } // Zavěsil systém
-                if (!empty($r_idstatus) && $r_idstatus == '00000244') { $users[$date][$idgroup]["recordsBusy"]    ++; } // Obsazeno
-                if (!empty($r_idstatus) && $r_idstatus == '00000261') { $users[$date][$idgroup]["recordsDenied"]  ++; } // Odmítnuto
+                if (!empty($r_idstatus) && !empty($r_idcall))         { $users[$date][$iduser][$idgroup]["recordsTouched"] ++; }
+                if (!empty($r_idstatus) && $r_idstatus == '00000021') { $users[$date][$iduser][$idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
+                if (!empty($r_idstatus) && $r_idstatus == '00000122') { $users[$date][$iduser][$idgroup]["recordsTimeout"] ++; } // Zavěsil systém
+                if (!empty($r_idstatus) && $r_idstatus == '00000244') { $users[$date][$iduser][$idgroup]["recordsBusy"]    ++; } // Obsazeno
+                if (!empty($r_idstatus) && $r_idstatus == '00000261') { $users[$date][$iduser][$idgroup]["recordsDenied"]  ++; } // Odmítnuto
             }            
         } 
     }    
@@ -271,19 +287,23 @@ foreach ($users as $date => $usersByGroupDay) {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 
-foreach ($users as $date => $usersByDay) {
-    usort($usersByDay, function($a, $b) {
-        return $a["callCount"] < $b["callCount"];
-     });
+foreach ($users as $date => $daysByUserGroup) {
+    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
+            foreach ($daysByGroup as $idgroup => $counters) {
+            usort($counters, function($a, $b) {
+                return $a["callCount"] < $b["callCount"];
+            });
+        }    
+    }
 }
 // ==============================================================================================================================================================================================
 //Do the events magic
 
-foreach ($events as $date => $eventsByGroupDay) {  
+foreach ($events as $date => $daysByUserGroup) {  
 
-   foreach ($eventsByGroupDay as $idgroup => $eventsByDay) {
+   foreach ($daysByUserGroup as $iduser => $daysByGroup) {
     
-        foreach ($eventsByDay as $iduser => $evnts) {           // sort pole událostí podle času v rámci dnů
+        foreach ($daysByGroup as $idgroup => $evnts) {          // sort pole událostí podle času v rámci dnů
             
             usort($evnts, function($a, $b) {
                 return strcmp($a["time"], $b["time"]);
@@ -322,7 +342,7 @@ foreach ($events as $date => $eventsByGroupDay) {
             $lastTime = $currentTime;
             }
             foreach ($times as $evnTyp => $evnTime) {
-                $users[$date][$idgroup][$iduser][$evnTyp] = $times[$evnTyp];
+                $users[$date][$iduser][$idgroup][$evnTyp] = $times[$evnTyp];
             }
         }
     }
@@ -330,10 +350,10 @@ foreach ($events as $date => $eventsByGroupDay) {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Count idle time
 
-foreach ($users as $date => $usersByGroupDay) {
-    foreach ($usersByGroupDay as $idgroup => $usersByDay) {
-        foreach ($usersByDay as $iduser => $usr) {
-            $users[$date][$idgroup][$iduser]["idleTime"]  = $usr["Q"];
+foreach ($users as $date => $daysByUserGroup) {
+    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
+        foreach ($daysByGroup as $idgroup => $counters) {
+            $users[$date][$iduser][$idgroup]["idleTime"] = $counters["Q"];
         }
     }
 }
@@ -352,11 +372,10 @@ foreach ($users as $user) {
 // zápis záznamů do výstupních souborů       
         
 // zápis denních časových úhrnů pro jednotlivé uživatele (produkční výstup)
-foreach ($users as $date => $usersByGroupDay) {
-    foreach ($usersByGroupDay as $idgroup => $usersByDay) {
-        foreach ($usersByDay as $iduser => $user) {
-            $colVals = [];
-            $colVals[] = $date;
+foreach ($users as $date => $daysByUserGroup) {
+    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
+        foreach ($daysByGroup as $idgroup => $counters) {
+            $colVals = [$date, $idgroup];
             foreach ($user as $attrVal) {
                 $colVals[] = $attrVal;
             }
@@ -366,11 +385,11 @@ foreach ($users as $date => $usersByGroupDay) {
 }
 
 // zápis událostí (diagnostický výstup)
-foreach ($events as $date => $eventsByGroupDay) {
-    foreach ($eventsByGroupDay as $idgroup => $eventsByDay) {
-        foreach ($eventsByDay as $iduser => $evnts) {        
-            foreach ($evnts as $evntKey => $evnt) {
-                $colVals = [$iduser];
+foreach ($users as $date => $daysByUserGroup) {
+    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
+        foreach ($daysByGroup as $idgroup => $evnts) {        
+            foreach ($evnts as $evnt) {
+                $colVals = [$idgroup, $iduser];
                 foreach ($evnt as $evntVal) { 
                     $colVals[] = $evntVal;
                 }
