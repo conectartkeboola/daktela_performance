@@ -66,7 +66,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup = "") {
     }
     if (!empty($idgroup) && !array_key_exists($idgroup, $users[$date][$iduser])) {
         $user = [                                   // sestavení záznamu do pole uživatelů
-            "iduser"            => $qs_iduser,
+            "iduser"            => $iduser,
             "Q"                 => 0,
             "QA"                => 0,
             "QAP"               => 0,
@@ -91,7 +91,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup = "") {
     }
     if (!array_key_exists("", $users[$date][$iduser])) {
         $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
-            "iduser"            => $qs_iduser,
+            "iduser"            => $iduser,
             "Q"                 => "",
             "QA"                => "",
             "QAP"               => "",
@@ -165,14 +165,13 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         // queueSession je ze zkoumaného časového rozsahu -> cyklus generující queueSessions pro všechny dny, po které trvala reálná queueSession
         $processed_date = $qs_start_date;
         
-        while ($processed_date <= $qs_end_date) {
-            
-            initUsersAndEventsItems ($processed_date, $qs_iduser, $idgroup);
+        while ($processed_date <= $qs_end_date) {          
             
             $qs_start_time =  max($qs_start_time, $processed_date.' 00:00:00'); 
             $qs_end_time   =  min($qs_end_time  , $processed_date.' 23:59:59');
             
-            if ($qs_end_time > $qs_start_time) {            // eliminace nevalidních případů 
+            if ($qs_end_time > $qs_start_time) {            // eliminace nevalidních případů
+                initUsersAndEventsItems ($processed_date, $qs_iduser, $idgroup);
                 $users[$processed_date][$qs_iduser][$idgroup]["queueSession"] += strtotime($qs_end_time) - strtotime($qs_start_time);
                 $event1 = [
                     "time"      =>  $qs_start_time,
@@ -215,14 +214,13 @@ foreach ($users as $date => $daysByUserGroup) {
             // queueSession je ze zkoumaného časového rozsahu -> cyklus generující pauseSessions pro všechny dny, po které trvala reálná pauseSession
             $processed_date = $ps_start_date;
 
-            while ($processed_date <= $ps_end_date) {
-                
-                initUsersAndEventsItems ($processed_date, $ps_iduser, "");
+            while ($processed_date <= $ps_end_date) {          
 
                 $ps_start_time =  max($ps_start_time, $processed_date.' 00:00:00'); 
                 $ps_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
 
-                if ($ps_end_time <= $ps_start_time) {       // eliminace nevalidních případů 
+                if ($ps_end_time <= $ps_start_time) {       // eliminace nevalidních případů
+                    initUsersAndEventsItems ($processed_date, $iduser, "");
                     $users[$processed_date][$iduser][""]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
                                                             // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
                     $event1 = [
@@ -279,13 +277,12 @@ foreach ($users as $date => $daysByUserGroup) {
                 $processed_date = $a_date;
 
                 while ($processed_date <= $a_date_close) {
-                    
-                    initUsersAndEventsItems ($processed_date, $a_iduser, $idgroup);
 
                     $a_time_open  =  max($a_time_open,  $processed_date.' 00:00:00'); 
                     $a_time_close =  min($a_time_close, $processed_date.' 23:59:59');
 
-                    if ($a_time_close <= $a_time_open) {        // eliminace nevalidních případů 
+                    if ($a_time_close <= $a_time_open) {        // eliminace nevalidních případů
+                        initUsersAndEventsItems ($processed_date, $iduser, $idgroup);
                         if ($a_type == 'CALL' && !empty($item)) {
                             $users[$processed_date][$iduser][$idgroup]["activityTime"] += strtotime($a_time_close) - strtotime($a_time_open);
                             $users[$processed_date][$iduser][$idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
