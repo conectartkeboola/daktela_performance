@@ -63,56 +63,66 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
         if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
         $qs_start_time = $qs[1];
-        $qs_end_time   = $qs[2];
+        $qs_end_time   = !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s');
         $qs_idqueue    = $qs[4];
         $qs_iduser     = $qs[5];
         
         $qs_start_date = substr($qs_start_time, 0, 10);
         $qs_end_date   = substr($qs_end_time,   0, 10);
-        $qs_end_time   = $qs_end_date == $qs_start_date ? $qs_end_time : $qs_start_date.' 23:59:59');
 
         if ($qs_idqueue != $q_idqueue || $qs_start_time < $reportIntervTimes["start"] || $qs_start_time > $reportIntervTimes["end"]) {
             continue;                                       // queueSession není ze zkoumaného časového rozsahu nebo se netýká dané fronty
         }
         
-        // queueSession je ze zkoumaného časového rozsahu
-        if (!in_array($qs_start_date, array_keys($users))) {
-            $users[$qs_start_date] = [];
-        }
-        if (!in_array($qs_iduser, array_keys($users[$qs_start_date]))) {
-            $user = [                                       // sestavení záznamu do pole uživatelů
-                "iduser"            => $qs_iduser,
-                "Q"                 => 0,
-                "QA"                => 0,
-                "QAP"               => 0,
-                "QP"                => 0,
-                "P"                 => 0,
-                "AP"                => 0,
-                "queueSession"      => 0,
-                "pauseSession"      => 0,
-                "talkTime"          => 0,
-                "idleTime"          => 0,                            
-                "activityTime"      => 0,
-                "callCount"         => 0,
-                "callCountAnswered" => 0,
-                //"transactionCount"  => 0
+        // queueSession je ze zkoumaného časového rozsahu -> cyklus generující queueSessions pro všechny dny, po které trvala reálná queueSession
+        $processed_date = $qs_start_date;
+        
+        while ($processed_date <= $qs_end_date) {
+            
+            if (!in_array($processed_date, array_keys($users))) {
+                $users[$processed_date] = [];
+            }        
+            if (!in_array($qs_iduser, array_keys($users[$processed_date]))) {
+                $user = [                                   // sestavení záznamu do pole uživatelů
+                    "iduser"            => $qs_iduser,
+                    "Q"                 => 0,
+                    "QA"                => 0,
+                    "QAP"               => 0,
+                    "QP"                => 0,
+                    "P"                 => 0,
+                    "AP"                => 0,
+                    "queueSession"      => 0,
+                    "pauseSession"      => 0,
+                    "talkTime"          => 0,
+                    "idleTime"          => 0,                            
+                    "activityTime"      => 0,
+                    "callCount"         => 0,
+                    "callCountAnswered" => 0,
+                    //"transactionCount"  => 0
+                ];
+                $users [$processed_date][$qs_iduser] = $user;// zápis záznamu do pole uživatelů
+                $events[$processed_date][$qs_iduser] = [];   // inicializace záznamu do pole událostí
+            }
+            $qs_start_time =  $processed_date == $qs_start_date ? $qs_start_time : $processed_date.' 00:00:00'; 
+            $qs_end_time   =  $processed_date == $qs_end_date   ? $qs_end_time   : $processed_date.' 23:59:59';
+            
+            $users[$processed_date][$qs_iduser]["queueSession"] += strtotime($qs_end_time) - strtotime($qs_start_time);
+            
+            $event1 = [
+                "time"      =>  $qs_start_time,
+                "type"      =>  "Q",
+                "method"    =>  "+"                   
             ];
-            $users [$qs_start_date][$qs_iduser] = $user;    // zápis záznamu do pole uživatelů
-            $events[$qs_start_date][$qs_iduser] = [];       // inicializace záznamu do pole událostí
+            $event2 = [
+                "time"      =>  $qs_end_time,
+                "type"      =>  "Q",
+                "method"    =>  "-"                   
+            ];
+            $events[$processed_date][$qs_iduser][] = $event1; 
+            $events[$processed_date][$qs_iduser][] = $event2;// zápis záznamů do pole událostí
+            
+            $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
         }
-        $users [$qs_start_date][$qs_iduser]["queueSession"] += strtotime($qs_end_time) - strtotime($qs_start_time);
-        $event1 = [
-            "time"      =>  $qs_start_time,
-            "type"      =>  "Q",
-            "method"    =>  "+"                   
-        ];
-        $event2 = [
-            "time"      =>  $qs_end_time,
-            "type"      =>  "Q",
-            "method"    =>  "-"                   
-        ];
-        $events[$qs_start_date][$qs_iduser][] = $event1; 
-        $events[$qs_start_date][$qs_iduser][] = $event2;    // zápis záznamů do pole událostí         
     }
 }                                                           // konec iterace front  
 // ==============================================================================================================================================================================================
@@ -140,30 +150,40 @@ foreach ($users as $date => $usersByDay) {
         foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
             if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
             $ps_start_time = $ps[1];
-            $ps_end_time   = $ps[2];
+            $ps_end_time   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
             $ps_iduser     = $ps[5];
             
             $ps_start_date = substr($ps_start_time, 0, 10);
             $ps_end_date   = substr($ps_end_time,   0, 10);
-            $ps_end_time   = $ps_end_date == $ps_start_date ? $ps_end_time : $ps_start_date.' 23:59:59');
 
             if ($ps_start_date != $date  ||  $ps_iduser != $iduser) {continue;}
                                                             // pauseSession není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
 
-            // queueSession je ze zkoumaného časového rozsahu
-            $users[$ps_start_date][$iduser]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
-            $event1 = [
-                "time"      =>  $ps_start_time,
-                "type"      =>  "P",
-                "method"    =>  "+"
-            ];
-            $event2 = [
-                "time"      =>  $ps_end_time,
-                "type"      =>  "P",
-                "method"    =>  "-"
-            ];
-            $events[$ps_start_date][$iduser][] = $event1;
-            $events[$ps_start_date][$iduser][] = $event2;               
+            // queueSession je ze zkoumaného časového rozsahu -> cyklus generující pauseSessions pro všechny dny, po které trvala reálná pauseSession
+            $processed_date = $ps_start_date;
+            
+            while ($processed_date <= $ps_end_date) {
+                
+                $ps_start_time =  $processed_date == $ps_start_date ? $ps_start_time : $processed_date.' 00:00:00'; 
+                $ps_end_time   =  $processed_date == $ps_end_date   ? $ps_end_time   : $processed_date.' 23:59:59';  
+                
+                $users[$processed_date][$iduser]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
+                
+                $event1 = [
+                    "time"      =>  $ps_start_time,
+                    "type"      =>  "P",
+                    "method"    =>  "+"
+                ];
+                $event2 = [
+                    "time"      =>  $ps_end_time,
+                    "type"      =>  "P",
+                    "method"    =>  "-"
+                ];
+                $events[$processed_date][$iduser][] = $event1;
+                $events[$processed_date][$iduser][] = $event2;
+                
+                $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
+            }
         }                                            
         // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
         // Get activities
@@ -175,39 +195,48 @@ foreach ($users as $date => $usersByDay) {
             $a_time       = $a[13];
             $a_type       = $a[10];
             $a_time_open  = $a[15];
-            $a_time_close = $a[16];
+            $a_time_close = !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s');
             $a_item       = $a[19];
             $item         = json_decode($a_item, false);    // dekódováno z JSONu na objekt
             
             $a_date       = substr($a_time, 0, 10);            
             $a_date_open  = substr($a_time_open,  0, 10);
             $a_date_close = substr($a_time_close, 0, 10);
-            $a_time_close = $a_date_close == $a_date_open ? $a_time_close : $a_date_open.' 23:59:59');
                                                         
             if ($a_date != $date  ||  $a_iduser != $iduser) {continue;}
                                                             // aktivita není ze zkoumaného časového rozsahu nebo se netýká daného uživatele
 
-            // aktivita je ze zkoumaného časového rozsahu
-            if ($a_type == 'CALL' && !empty($item)) {
-                $users[$a_date][$iduser]["activityTime"] += strtotime($a_time_close) - strtotime($a_time_open);
-                $users[$a_date][$iduser]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
-                $users[$a_date][$iduser]["callCount"]    += 1;
-                if ($item-> answered == "true") {           // parsuji answered z objektu $item
-                    $users[$a_date][$iduser]["callCountAnswered"] += 1;
+            // aktivita je ze zkoumaného časového rozsahu-> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
+            $processed_date = $a_date;
+            
+            while ($processed_date <= $a_date_close) {
+                
+                $a_time_open  =  $processed_date == $a_date_open  ? $a_time_open  : $processed_date.' 00:00:00'; 
+                $a_time_close =  $processed_date == $a_date_close ? $a_time_close : $processed_date.' 23:59:59'; 
+                
+                if ($a_type == 'CALL' && !empty($item)) {
+                    $users[$processed_date][$iduser]["activityTime"] += strtotime($a_time_close) - strtotime($a_time_open);
+                    $users[$processed_date][$iduser]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
+                    $users[$processed_date][$iduser]["callCount"]    += 1;
+                    if ($item-> answered == "true") {           // parsuji answered z objektu $item
+                        $users[$a_date][$iduser]["callCountAnswered"] += 1;
+                    }
                 }
+                $event1 = [
+                    "time"      =>  $a_time_open,
+                    "type"      =>  "A",
+                    "method"    =>  "+"                   
+                ];
+                $event2 = [
+                    "time"      =>  $a_time_close,
+                    "type"      =>  "A",
+                    "method"    =>  "-"                   
+                ];
+                $events[$processed_date][$iduser][] = $event1;
+                $events[$processed_date][$iduser][] = $event2;
+
+                $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
             }
-            $event1 = [
-                "time"      =>  $a_time_open,
-                "type"      =>  "A",
-                "method"    =>  "+"                   
-            ];
-            $event2 = [
-                "time"      =>  $a_time_close,
-                "type"      =>  "A",
-                "method"    =>  "-"                   
-            ];
-            $events[$a_date][$iduser][] = $event1;
-            $events[$a_date][$iduser][] = $event2;                   
         }     
         // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
         //Get records
