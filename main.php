@@ -93,7 +93,6 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
             }
             if (!in_array($qs_iduser, array_keys($users[$processed_date]))) {
                 $users[$processed_date][$qs_iduser] = [];
-                $users[$processed_date][""][$qs_iduser]= 0; // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
             }
             if (!in_array($idgroup, array_keys($users[$processed_date][$qs_iduser]))) {
                 $user = [                                   // sestavení záznamu do pole uživatelů
@@ -118,8 +117,30 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     "recordsBusy"       => 0,
                     "recordsDenied"     => 0
                 ];
+                $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
+                    "iduser"            => $qs_iduser,
+                    "Q"                 => "",
+                    "QA"                => "",
+                    "QAP"               => "",
+                    "QP"                => "",
+                    "P"                 => "",
+                    "AP"                => "",
+                    "queueSession"      => "",
+                    "pauseSession"      => 0,               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+                    "talkTime"          => "",
+                    "idleTime"          => "",                            
+                    "activityTime"      => "",
+                    "callCount"         => "",
+                    "callCountAnswered" => "",
+                    //"transactionCount"  => "",
+                    "recordsTouched"    => "",
+                    "recordsDropped"    => "",
+                    "recordsTimeout"    => "",
+                    "recordsBusy"       => "",
+                    "recordsDenied"     => ""
+                ];
                 $users [$processed_date][$qs_iduser][$idgroup] = $user;     // zápis záznamu do pole uživatelů
-                $users [$processed_date][$qs_iduser][""] = 0;               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+                $users [$processed_date][$qs_iduser][""] = $userForPS;      // zápis záznamu do pole uživatelů
                 $events[$processed_date][$qs_iduser][$idgroup] = [];        // inicializace záznamu do pole událostí
             }
             $qs_start_time =  max($qs_start_time, $processed_date.' 00:00:00'); 
@@ -174,7 +195,7 @@ foreach ($users as $date => $daysByUserGroup) {
                 $ps_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
 
                 if ($ps_end_time <= $ps_start_time) {       // eliminace nevalidních případů 
-                    $users[$processed_date][""][$idgroup]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
+                    $users[$processed_date][$iduser][""]["pauseSession"] += strtotime($ps_end_time) - strtotime($ps_start_time);
                                                             // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
                     $event1 = [
                         "time"      =>  $ps_start_time,
