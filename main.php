@@ -385,7 +385,7 @@ foreach ($users as $date => $daysByUserGroup) {
 }
 
 // zápis událostí (diagnostický výstup)
-foreach ($users as $date => $daysByUserGroup) {
+foreach ($events as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $evnts) {        
             foreach ($evnts as $evnt) {
