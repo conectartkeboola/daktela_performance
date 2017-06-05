@@ -200,7 +200,7 @@ foreach ($users as $date => $daysByUserGroup) {
                 if ($qNum == 0) {continue;}                     // vynechání hlavičky tabulky
                 $q_idqueue = $q[0];
                 $q_idgroup = $q[3];
-                if ($q_idgroup != $idgroup) {
+                if ($q_idgroup == $idgroup) {
                     $idqueue = $q_idqueue;
                     break;
                 }
