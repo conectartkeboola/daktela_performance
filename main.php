@@ -186,8 +186,8 @@ foreach ($users as $date => $daysByUserGroup) {
                         "type"      =>  "P",
                         "method"    =>  "-"
                     ];
-                    $events[$processed_date][""][$idgroup][] = $event1;
-                    $events[$processed_date][""][$idgroup][] = $event2;                                 // [""] ... prázdná skupina
+                    $events[$processed_date][$iduser][""][] = $event1;
+                    $events[$processed_date][$iduser][""][] = $event2;                                  // [""] ... prázdná skupina
                 }
                 $processed_date = date('Y-m-d',(strtotime( '+1 day', strtotime($processed_date))));     // inkrement data o 1 den
             }
