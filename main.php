@@ -154,9 +154,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         }
         $idgroup = "";                                      // fronta není přiřazena do žádné skupiny
     }
-    $queueGroup[] = ["idqueue" => $q_idqueue,               // zápis prvku do pole párů fronta-skupina
-                     "idgroup" => $idgroup
-                            ];
+    $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
 }
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
     // iterace queueSessions
