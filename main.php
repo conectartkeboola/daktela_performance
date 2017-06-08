@@ -55,8 +55,7 @@ foreach ($tabsOut as $tab => $cols) {
 // funkce
 
 function initUsersAndEventsItems ($date, $iduser, $idgroup) {
-    global $users, $events;
-    
+    global $users, $events;    
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
         $users[$date] = [];
@@ -64,7 +63,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     if (!array_key_exists($iduser, $users[$date])) {
         $users[$date][$iduser] = [];
     }
-    if (!empty($idgroup) && !array_key_exists($idgroup, $users[$date][$iduser])) {
+    if (/*!empty($idgroup) &&*/ !array_key_exists($idgroup, $users[$date][$iduser])) {
         $user = [                                   // sestavení záznamu do pole uživatelů
             "iduser"            => $iduser,
             "Q"                 => NULL,
@@ -88,33 +87,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
             "recordsDenied"     => NULL
         ];
         $users[$date][$iduser][$idgroup] = $user;
-    }
-    if (empty($idgroup) && !array_key_exists("", $users[$date][$iduser])) {
-        $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
-            "iduser"            => $iduser,
-            "Q"                 => NULL,
-            "QA"                => NULL,
-            "QAP"               => NULL,
-            "QP"                => NULL,
-            "P"                 => NULL,
-            "AP"                => NULL,
-            "queueSession"      => NULL,
-            "pauseSession"      => NULL,           // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
-            "talkTime"          => NULL,
-            "idleTime"          => NULL,                            
-            "activityTime"      => NULL,
-            "callCount"         => NULL,
-            "callCountAnswered" => NULL,
-            //"transactionCount"  => "",
-            "recordsTouched"    => NULL,
-            "recordsDropped"    => NULL,
-            "recordsTimeout"    => NULL,
-            "recordsBusy"       => NULL,
-            "recordsDenied"     => NULL
-        ];
-        $users[$date][$iduser][""] = $userForPS;
-    }
-    
+    }   
     // inicializace záznamů do pole událostí
     if (!array_key_exists($date, $events)) {
         $events[$date] = [];
@@ -382,12 +355,12 @@ foreach ($events as $date => $daysByUserGroup) {
             });
 
             $times = [                                          // časy pro uspořádanou trojici [datum; skupina; uživatel]
-                "Q"         => 0,
-                "QA"        => 0,
-                "QAP"       => 0,
-                "QP"        => 0,
-                "P"         => 0,
-                "AP"        => 0
+                "Q"         => NULL,
+                "QA"        => NULL,
+                "QAP"       => NULL,
+                "QP"        => NULL,
+                "P"         => NULL,
+                "AP"        => NULL
             ];
             $lastTime = 0;
             $status = [
