@@ -92,25 +92,25 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     if (empty($idgroup) && !array_key_exists("", $users[$date][$iduser])) {
         $userForPS = [                              // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
             "iduser"            => $iduser,
-            "Q"                 => "",
-            "QA"                => "",
-            "QAP"               => "",
-            "QP"                => "",
-            "P"                 => "",
-            "AP"                => "",
-            "queueSession"      => "",
+            "Q"                 => 0,
+            "QA"                => 0,
+            "QAP"               => 0,
+            "QP"                => 0,
+            "P"                 => 0,
+            "AP"                => 0,
+            "queueSession"      => 0,
             "pauseSession"      => 0,               // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
-            "talkTime"          => "",
-            "idleTime"          => "",                            
-            "activityTime"      => "",
-            "callCount"         => "",
-            "callCountAnswered" => "",
+            "talkTime"          => 0,
+            "idleTime"          => 0,                            
+            "activityTime"      => 0,
+            "callCount"         => 0,
+            "callCountAnswered" => 0,
             //"transactionCount"  => "",
-            "recordsTouched"    => "",
-            "recordsDropped"    => "",
-            "recordsTimeout"    => "",
-            "recordsBusy"       => "",
-            "recordsDenied"     => ""
+            "recordsTouched"    => 0,
+            "recordsDropped"    => 0,
+            "recordsTimeout"    => 0,
+            "recordsBusy"       => 0,
+            "recordsDenied"     => 0
         ];
         $users[$date][$iduser][""] = $userForPS;
     }
