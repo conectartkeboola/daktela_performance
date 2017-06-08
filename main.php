@@ -126,10 +126,12 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
         $events[$date][$iduser][$idgroup] = [];
     }
 }
-
 function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
     return date('Y-m-d',(strtotime($days.' day', strtotime($datum))));
 }
+function findInArray ($key, $arr) {
+    return array_key_exists($key, $arr) ? $arr[$key] : "";
+} 
 // ==============================================================================================================================================================================================
 
 $users = $events = $queueGroup = [];                       // inicializace polí
@@ -169,7 +171,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         $qs_idqueue    = $qs[4];
         $qs_iduser     = $qs[5];
         
-        $qs_idgroup    = $queueGroup[$qs_idqueue];
+        $qs_idgroup    = findInArray ($qs_idqueue, $queueGroup);
         $qs_start_date = substr($qs_start_time, 0, 10);
         $qs_end_date   = substr($qs_end_time,   0, 10);
 
@@ -283,7 +285,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $a_item       = $a[19];
                 $item         = json_decode($a_item, false);    // dekódováno z JSONu na objekt
 
-                $a_idgroup    = $queueGroup[$a_idqueue];
+                $a_idgroup    = findInArray ($a_idqueue, $queueGroup);
                 $a_date       = substr($a_time, 0, 10);         
                 $a_date_open  = substr($a_time_open,  0, 10);
                 $a_date_close = substr($a_time_close, 0, 10);
@@ -327,7 +329,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
             //Get records
 
             foreach ($records as $rNum => $r) {
-                if ($rNum == 0) {continue;}                     // vynechání hlavičky tabulky
+                if ($rNum == 0) {continue;}                    // vynechání hlavičky tabulky
                 $r_idinstance = $r[8];
                 if ($r_idinstance != '3') {continue;}           // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
                 
@@ -337,8 +339,8 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $r_idstatus   = $r[3];
                 $r_idcall     = $r[5];
                 
-                $r_idgroup    = $queueGroup[$r_idqueue];
-                $r_edited_date = substr($r_edited, 0, 10);
+                $r_idgroup    = findInArray ($r_idqueue, $queueGroup);
+                $r_edited_date= substr($r_edited, 0, 10);
 
                 if (/*$r_edited_date != $date  ||  $r_idqueue != $idqueue  ||  $r_iduser != $iduser*/ $r_edited_date < $reportIntervTimes["start"] || $r_edited_date > $reportIntervTimes["end"]) {continue;} 
                                                                 // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
