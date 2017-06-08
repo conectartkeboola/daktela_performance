@@ -171,7 +171,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         $qs_idqueue    = $qs[4];
         $qs_iduser     = $qs[5];
         
-        $qs_idgroup    = findInArray ($qs_idqueue, $queueGroup);
+        $qs_idgroup    = findInArray($qs_idqueue, $queueGroup);
         $qs_start_date = substr($qs_start_time, 0, 10);
         $qs_end_date   = substr($qs_end_time,   0, 10);
 
@@ -285,7 +285,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $a_item       = $a[19];
                 $item         = json_decode($a_item, false);    // dekódováno z JSONu na objekt
 
-                $a_idgroup    = findInArray ($a_idqueue, $queueGroup);
+                $a_idgroup    = findInArray($a_idqueue, $queueGroup);
                 $a_date       = substr($a_time, 0, 10);         
                 $a_date_open  = substr($a_time_open,  0, 10);
                 $a_date_close = substr($a_time_close, 0, 10);
@@ -339,15 +339,14 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $r_idstatus   = $r[3];
                 $r_idcall     = $r[5];
                 
-                $r_idgroup    = findInArray ($r_idqueue, $queueGroup);
+                $r_idgroup    = findInArray($r_idqueue, $queueGroup);
                 $r_edited_date= substr($r_edited, 0, 10);
 
                 if (/*$r_edited_date != $date  ||  $r_idqueue != $idqueue  ||  $r_iduser != $iduser*/ $r_edited_date < $reportIntervTimes["start"] || $r_edited_date > $reportIntervTimes["end"]) {continue;} 
                                                                 // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
                 // záznam je ze zkoumaného časového rozsahu
-                initUsersAndEventsItems ($r_edited_date, $r_iduser, $r_idgroup);
-                
+                initUsersAndEventsItems ($r_edited_date, $r_iduser, $r_idgroup);                
                 if (!empty($r_idstatus) && !empty($r_idcall))         { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTouched"] ++; }
                 if (!empty($r_idstatus) && $r_idstatus == '00000021') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
                 if (!empty($r_idstatus) && $r_idstatus == '00000122') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTimeout"] ++; } // Zavěsil systém
@@ -359,7 +358,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 //}                                                           // konec iterace users pro sessions + activities + records + TOTALS 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
-
+/*
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
             foreach ($daysByGroup as $idgroup => $counters) {
@@ -368,7 +367,7 @@ foreach ($users as $date => $daysByUserGroup) {
             });
         }    
     }
-}
+}*/
 // ==============================================================================================================================================================================================
 //Do the events magic
 
