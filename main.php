@@ -182,7 +182,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
             $qsDay_start_time = max($qs_start_time, $processed_date.' 00:00:00'); 
             $qsDay_end_time   = min($qs_end_time  , $processed_date.' 23:59:59');
             
-            if ($qsDay_end_time > $qsDay_start_time) {            // eliminace nevalidních případů
+            if ($qsDay_end_time > $qsDay_start_time) {      // eliminace nevalidních případů
                 initUsersAndEventsItems ($processed_date, $qs_iduser, $qs_idgroup);
                 $users[$processed_date][$qs_iduser][$qs_idgroup]["queueSession"] += strtotime($qsDay_end_time) - strtotime($qsDay_start_time);
                 $event1 = [ "time"      =>  $qsDay_start_time,
@@ -229,7 +229,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $psDay_start_time =  max($ps_start_time, $processed_date.' 00:00:00'); 
                 $psDay_end_time   =  min($ps_end_time  , $processed_date.' 23:59:59');
 
-                if ($psDay_end_time <= $psDay_start_time) {       // eliminace nevalidních případů
+                if ($psDay_end_time > $psDay_start_time) {  // eliminace nevalidních případů
                     initUsersAndEventsItems ($processed_date, $ps_iduser, "");
                     $users[$processed_date][$ps_iduser][""]["pauseSession"] += strtotime($psDay_end_time) - strtotime($psDay_start_time);
                                                             // [""] ... prázdná skupina - pro pauseSessions, které nezávisí na skupině
@@ -290,13 +290,13 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     $aDay_time_open  =  max($a_time_open,  $processed_date.' 00:00:00'); 
                     $aDay_time_close =  min($a_time_close, $processed_date.' 23:59:59');
 
-                    if ($aDay_time_close <= $aDay_time_open) {        // eliminace nevalidních případů
+                    if ($aDay_time_close > $aDay_time_open) {   // eliminace nevalidních případů
                         initUsersAndEventsItems ($processed_date, $a_iduser, $a_idgroup);
                         if ($a_type == 'CALL' && !empty($item)) {
                             $users[$processed_date][$a_iduser][$a_idgroup]["activityTime"] += strtotime($aDay_time_close) - strtotime($aDay_time_open);
                             $users[$processed_date][$a_iduser][$a_idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
                             $users[$processed_date][$a_iduser][$a_idgroup]["callCount"]    += 1;
-                            if ($item-> answered == "true") {           // parsuji answered z objektu $item
+                            if ($item-> answered == "true") {   // parsuji answered z objektu $item
                                 $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
                             }
                         }
