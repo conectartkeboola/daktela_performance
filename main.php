@@ -161,6 +161,9 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     
     foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
         if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
+        $qs_idinstance = substr($qs[0], 0 ,1);              // $qs[0] ... idqueuesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+        if ($qs_idinstance != '3') {continue;}              // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+        
         $qs_start_time = $qs[1];
         $qs_end_time   = !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s');
         $qs_idqueue    = $qs[4];
@@ -211,6 +214,9 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
         foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
             if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
+            $ps_idinstance = substr($ps[0], 0 ,1);          // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+            if ($ps_idinstance != '3') {continue;}          // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+            
             $ps_start_time = $ps[1];
             $ps_end_time   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
             $ps_iduser     = $ps[5];
@@ -265,6 +271,9 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
             foreach ($activities as $aNum => $a) {
                 if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
+                $a_idinstance = $a[18];
+                if ($a_idinstance != '3') {continue;}           // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+                
                 $a_idqueue    = $a[5];
                 $a_iduser     = $a[6];
                 $a_time       = $a[13];
@@ -292,7 +301,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
                     if ($aDay_time_close > $aDay_time_open) {   // eliminace nevalidních případů
                         initUsersAndEventsItems ($processed_date, $a_iduser, $a_idgroup);
-                        if ($a_type == 'CALL' && !empty($item)) {
+                        if ($a_type == 'CALL' && !empty($a_item)) {
                             $users[$processed_date][$a_iduser][$a_idgroup]["activityTime"] += strtotime($aDay_time_close) - strtotime($aDay_time_open);
                             $users[$processed_date][$a_iduser][$a_idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
                             $users[$processed_date][$a_iduser][$a_idgroup]["callCount"]    += 1;
@@ -319,11 +328,14 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
             foreach ($records as $rNum => $r) {
                 if ($rNum == 0) {continue;}                     // vynechání hlavičky tabulky
-                $r_iduser   = $r[1];
-                $r_idqueue  = $r[2];
-                $r_edited   = $r[6];
-                $r_idstatus = $r[3];
-                $r_idcall   = $r[5];            
+                $r_idinstance = $r[8];
+                if ($r_idinstance != '3') {continue;}           // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+                
+                $r_iduser     = $r[1];
+                $r_idqueue    = $r[2];
+                $r_edited     = $r[6];
+                $r_idstatus   = $r[3];
+                $r_idcall     = $r[5];
                 
                 $r_idgroup    = $queueGroup[$r_idqueue];
                 $r_edited_date = substr($r_edited, 0, 10);
