@@ -401,7 +401,7 @@ foreach ($events as $date => $daysByUserGroup) {
             $lastTime = $currentTime;
             }
             foreach ($times as $evnTyp => $evnTime) {
-                $users[$date][$iduser][$idgroup][$evnTyp] = $times[$evnTyp];
+                $users[$date][$iduser][$idgroup][$evnTyp] = $evnTime;
             }
         }
     }
