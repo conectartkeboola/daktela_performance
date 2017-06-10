@@ -350,7 +350,7 @@ foreach ($events as $date => $daysByUserGroup) {
     
         foreach ($daysByGroup as $idgroup => $evnts) {          // sort pole událostí podle času v rámci dnů
             
-            usort($evnts, function($a, $b) {
+            usort($events[$date][$iduser], function($a, $b) {
                 return strcmp($a["time"], $b["time"]);
             });
 
@@ -368,7 +368,7 @@ foreach ($events as $date => $daysByUserGroup) {
                 "A" => false,
                 "P" => false
             ];
-            foreach ($evnts as $evnt) {
+            foreach ($events[$date][$iduser] as $evnt) {
                 $currentTime = strtotime($evnt["time"]);
                 if ($lastTime > 0) {
                     switch ([$status["Q"], $status["A"], $status["P"]]) {                    
