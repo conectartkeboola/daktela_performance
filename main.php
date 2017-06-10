@@ -362,6 +362,8 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                 $r_idstatus   = $r[3];
                 $r_idcall     = $r[5];
                 
+                if (empty($r_iduser) || empty($r_edited) || empty($r_idstatus)) {continue;}     // vyřazení případných neúplných záznamů
+                
                 $r_idgroup    = findInArray($r_idqueue, $queueGroup);
                 $r_edited_date= substr($r_edited, 0, 10);
 
@@ -370,11 +372,11 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
                 // záznam je ze zkoumaného časového rozsahu
                 initUsersAndEventsItems ($r_edited_date, $r_iduser, $r_idgroup);                
-                if (!empty($r_idstatus) && !empty($r_idcall))         { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTouched"] ++; }
-                if (!empty($r_idstatus) && $r_idstatus == '00000021') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
-                if (!empty($r_idstatus) && $r_idstatus == '00000122') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTimeout"] ++; } // Zavěsil systém
-                if (!empty($r_idstatus) && $r_idstatus == '00000244') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsBusy"]    ++; } // Obsazeno
-                if (!empty($r_idstatus) && $r_idstatus == '00000261') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsDenied"]  ++; } // Odmítnuto
+                if (!empty($r_idcall))         { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTouched"] ++; }
+                if ($r_idstatus == '00000021') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsDropped"] ++; } // Zavěsil zákazník
+                if ($r_idstatus == '00000122') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsTimeout"] ++; } // Zavěsil systém
+                if ($r_idstatus == '00000244') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsBusy"]    ++; } // Obsazeno
+                if ($r_idstatus == '00000261') { $users[$r_edited_date][$r_iduser][$r_idgroup]["recordsDenied"]  ++; } // Odmítnuto
             }            
 //        } 
 //    }    
