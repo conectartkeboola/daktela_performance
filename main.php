@@ -156,12 +156,27 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         $processed_date = $qs_start_date;
         
         while ($processed_date <= $qs_end_date) {          
-            
             $qsDay_start_time = max($qs_start_time, $processed_date.' 00:00:00'); 
             $qsDay_end_time   = min($qs_end_time  , $processed_date.' 23:59:59');
             
             if ($qsDay_start_time < $qsDay_end_time) {      // eliminace nevalidních případů
-                if (empty($events)) {
+                $sessionOverlay = false; 
+                if (!empty($events)) {
+                    $eventStartTime = $eventEndTime = NULL;                      
+                    foreach ($events[$processed_date][$qs_iduser][$qs_idgroup] as $event) {
+                        if ($event["type"]=="Q" && $event["method"]=="+") {$eventStartTime = $event["time"];}
+                        if ($event["type"]=="Q" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
+                        if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
+                            if (!(($qsDay_start_time < $eventStartTime && $qsDay_end_time < $eventStartTime) ||
+                                ($qsDay_start_time > $eventEndTime   && $qsDay_end_time < $eventEndTime) )) { // zkoumaný event se překrývá s už zaznamenanými eventy
+                                $sessionOverlay = true;   
+                                break; 
+                            }
+                            $eventStartTime = $eventEndTime = NULL;  
+                        }                     
+                    }
+                }
+                if (!$sessionOverlay) {
                     initUsersAndEventsItems ($processed_date, $qs_iduser, $qs_idgroup);
                     $users[$processed_date][$qs_iduser][$qs_idgroup]["queueSession"] = strtotime($qsDay_end_time) - strtotime($qsDay_start_time);
                     $event1 = [ "time"      =>  $qsDay_start_time,
@@ -174,30 +189,6 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                     ];
                     $events[$processed_date][$qs_iduser][$qs_idgroup][] = $event1; 
                     $events[$processed_date][$qs_iduser][$qs_idgroup][] = $event2;                          // zápis záznamů do pole událostí    
-                } else {          
-                    $eventStartTime = $eventEndTime = NULL; 
-                    foreach ($events[$processed_date][$qs_iduser][$qs_idgroup] as $event) {
-                        if ($event["type"]=="Q" && $event["method"]=="+") {$eventStartTime = $event["time"];}
-                        if ($event["type"]=="Q" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
-                        if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
-                            if (($qsDay_start_time < $eventStartTime && $qsDay_end_time < $eventStartTime) ||
-                                ($qsDay_start_time > $eventEndTime   && $qsDay_end_time < $eventEndTime) ) {    // zkoumaný event se nepřekrývá s už zaznamenanými eventy
-
-                                $users[$processed_date][$qs_iduser][$qs_idgroup]["queueSession"] += strtotime($qsDay_end_time) - strtotime($qsDay_start_time);
-                                $event1 = [ "time"      =>  $qsDay_start_time,
-                                            "type"      =>  "Q",
-                                            "method"    =>  "+"             
-                                ];
-                                $event2 = [ "time"      =>  $qsDay_end_time,
-                                            "type"      =>  "Q",
-                                            "method"    =>  "-"               
-                                ];
-                                $events[$processed_date][$qs_iduser][$qs_idgroup][] = $event1; 
-                                $events[$processed_date][$qs_iduser][$qs_idgroup][] = $event2;                  // zápis záznamů do pole událostí       
-                                $eventStartTime = $eventEndTime = NULL;   
-                            }
-                        }                     
-                    }
                 }
             }
             $processed_date = dateIncrem($processed_date);  // inkrement data o 1 den
@@ -230,16 +221,31 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
             // queueSession je ze zkoumaného časového rozsahu -> cyklus generující pauseSessions pro všechny dny, po které trvala reálná pauseSession
             $processed_date = $ps_start_date;
-
-            while ($processed_date <= $qs_end_date) {
-
+            
+            while ($processed_date <= $ps_end_date) {          
                 $psDay_start_time = max($ps_start_time, $processed_date.' 00:00:00'); 
                 $psDay_end_time   = min($ps_end_time  , $processed_date.' 23:59:59');
 
-                if ($psDay_start_time < $psDay_end_time) {          // eliminace nevalidních případů
-                    if (empty($events)) {
-                        initUsersAndEventsItems ($processed_date, $ps_iduser, $ps_idgroup);
-                        $users[$processed_date][$qs_iduser][$qs_idgroup]["queueSession"] = strtotime($psDay_end_time) - strtotime($psDay_start_time);
+                if ($psDay_start_time < $psDay_end_time) {      // eliminace nevalidních případů
+                    $sessionOverlay = false; 
+                    if (!empty($events)) {
+                        $eventStartTime = $eventEndTime = NULL;                      
+                        foreach ($events[$processed_date][$ps_iduser][""] as $event) {      // [""] ... prázdná skupina
+                            if ($event["type"]=="P" && $event["method"]=="+") {$eventStartTime = $event["time"];}
+                            if ($event["type"]=="P" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
+                            if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
+                                if (!(($psDay_start_time < $eventStartTime && $psDay_end_time < $eventStartTime) ||
+                                      ($psDay_start_time > $eventEndTime   && $psDay_end_time < $eventEndTime) )) { // zkoumaný event se překrývá s už zaznamenanými eventy
+                                    $sessionOverlay = true;   
+                                    break; 
+                                }
+                                $eventStartTime = $eventEndTime = NULL;  
+                            }                     
+                        }
+                    }
+                    if (!$sessionOverlay) {
+                        initUsersAndEventsItems ($processed_date, $ps_iduser, "");
+                        $users[$processed_date][$ps_iduser][""]["pauseSession"] = strtotime($psDay_end_time) - strtotime($psDay_start_time);
                         $event1 = [ "time"      =>  $psDay_start_time,
                                     "type"      =>  "P",
                                     "method"    =>  "+"             
@@ -248,36 +254,12 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                                     "type"      =>  "P",
                                     "method"    =>  "-"               
                         ];
-                        $events[$processed_date][$ps_iduser][""][] = $event1;                       // [""] ... prázdná skupina
-                        $events[$processed_date][$ps_iduser][""][] = $event2;                       // zápis záznamů do pole událostí    
-                    } else {          
-                        $eventStartTime = $eventEndTime = NULL; 
-                        foreach ($events[$processed_date][$ps_iduser][$ps_idgroup] as $event) {
-                            if ($event["type"]=="P" && $event["method"]=="+") {$eventStartTime = $event["time"];}
-                            if ($event["type"]=="P" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
-                            if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
-                                if (($psDay_start_time < $eventStartTime && $psDay_end_time < $eventStartTime) ||
-                                    ($psDay_start_time > $eventEndTime   && $psDay_end_time < $eventEndTime) ) {    // zkoumaný event se nepřekrývá s už zaznamenanými eventy
-
-                                    $users[$processed_date][$ps_iduser][$ps_idgroup]["queueSession"] += strtotime($psDay_end_time) - strtotime($psDay_start_time);
-                                    $event1 = [ "time"      =>  $psDay_start_time,
-                                                "type"      =>  "P",
-                                                "method"    =>  "+"             
-                                    ];
-                                    $event2 = [ "time"      =>  $psDay_end_time,
-                                                "type"      =>  "P",
-                                                "method"    =>  "-"               
-                                    ];
-                                    $events[$processed_date][$ps_iduser][""][] = $event1;           // [""] ... prázdná skupina
-                                    $events[$processed_date][$ps_iduser][""][] = $event2;           // zápis záznamů do pole událostí       
-                                    $eventStartTime = $eventEndTime = NULL;   
-                                }
-                            }                     
-                        }
+                        $events[$processed_date][$ps_iduser][""][] = $event1;       // [""] ... prázdná skupina
+                        $events[$processed_date][$ps_iduser][""][] = $event2;       // zápis záznamů do pole událostí    
                     }
                 }
                 $processed_date = dateIncrem($processed_date);  // inkrement data o 1 den
-            }            
+            }
         }        
         // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 
@@ -319,43 +301,29 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 
                 // aktivita je ze zkoumaného časového rozsahu-> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
                 $processed_date = $a_date;
-
-                while ($processed_date <= $a_date_close) {
-
-                    $aDay_time_open  =  max($a_time_open,  $processed_date.' 00:00:00'); 
-                    $aDay_time_close =  min($a_time_close, $processed_date.' 23:59:59');
-
-                    if ($aDay_time_open < $aDay_time_close) {   // eliminace nevalidních případů
-                        initUsersAndEventsItems ($processed_date, $a_iduser, $a_idgroup);
-                        if ($a_type == 'CALL' && !empty($a_item)) {
-                            $users[$processed_date][$a_iduser][$a_idgroup]["activityTime"] += strtotime($aDay_time_close) - strtotime($aDay_time_open);
-                            $users[$processed_date][$a_iduser][$a_idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
-                            $users[$processed_date][$a_iduser][$a_idgroup]["callCount"]    += 1;
-                            if ($item-> answered == "true") {   // parsuji answered z objektu $item
-                                $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
-                            }
-                        }
-                        $event1 = [ "time"      =>  $aDay_time_open,
-                                    "type"      =>  "A",
-                                    "method"    =>  "+"                   
-                        ];
-                        $event2 = [ "time"      =>  $aDay_time_close,
-                                    "type"      =>  "A",
-                                    "method"    =>  "-"                   
-                        ];
-                        $events[$processed_date][$a_iduser][$a_idgroup][] = $event1;
-                        $events[$processed_date][$a_iduser][$a_idgroup][] = $event2;
-                    }
-                    $processed_date = dateIncrem($processed_date);  // inkrement data o 1 den
-                }
                 
-                while ($processed_date <= $qs_end_date) {
-
+                while ($processed_date <= $a_date_close) {          
                     $aDay_time_open  =  max($a_time_open,  $processed_date.' 00:00:00'); 
                     $aDay_time_close =  min($a_time_close, $processed_date.' 23:59:59');
 
                     if ($aDay_time_open < $aDay_time_close) {       // eliminace nevalidních případů
-                        if (empty($events)) {
+                        $sessionOverlay = false; 
+                        if (!empty($events)) {
+                            $eventStartTime = $eventEndTime = NULL;                      
+                            foreach ($events[$processed_date][$a_iduser][$a_idgroup] as $event) {
+                                if ($event["type"]=="A" && $event["method"]=="+") {$eventStartTime = $event["time"];}
+                                if ($event["type"]=="A" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
+                                if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
+                                    if (!(($aDay_time_open < $eventStartTime && $aDay_time_close < $eventStartTime) ||
+                                          ($aDay_time_open > $eventEndTime   && $aDay_time_close < $eventEndTime) )) { // zkoumaný event se překrývá s už zaznamenanými eventy
+                                        $sessionOverlay = true;   
+                                        break; 
+                                    }
+                                    $eventStartTime = $eventEndTime = NULL;  
+                                }                     
+                            }
+                        }
+                        if (!$sessionOverlay) {
                             initUsersAndEventsItems ($processed_date, $a_iduser, $a_idgroup);
                             if ($a_type == 'CALL' && !empty($a_item)) {
                                 $users[$processed_date][$a_iduser][$a_idgroup]["activityTime"] += strtotime($aDay_time_close) - strtotime($aDay_time_open);
@@ -365,47 +333,16 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
                                     $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
                                 }
                             }
-                            $event1 = [ "time"      =>  $psDay_start_time,
-                                        "type"      =>  "P",
+                            $event1 = [ "time"      =>  $aDay_time_open,
+                                        "type"      =>  "A",
                                         "method"    =>  "+"             
                             ];
-                            $event2 = [ "time"      =>  $psDay_end_time,
-                                        "type"      =>  "P",
+                            $event2 = [ "time"      =>  $aDay_time_close,
+                                        "type"      =>  "A",
                                         "method"    =>  "-"               
                             ];
-                            $events[$processed_date][$ps_iduser][""][] = $event1;                       // [""] ... prázdná skupina
-                            $events[$processed_date][$ps_iduser][""][] = $event2;                       // zápis záznamů do pole událostí    
-                        } else {          
-                            $eventStartTime = $eventEndTime = NULL; 
-                            foreach ($events[$processed_date][$ps_iduser][$ps_idgroup] as $event) {
-                                if ($event["type"]=="P" && $event["method"]=="+") {$eventStartTime = $event["time"];}
-                                if ($event["type"]=="P" && $event["method"]=="-") {$eventEndTime   = $event["time"];}
-                                if (!is_null($eventEndTime) && !is_null($eventEndTime)) {
-                                    if (($psDay_start_time < $eventStartTime && $psDay_end_time < $eventStartTime) ||
-                                        ($psDay_start_time > $eventEndTime   && $psDay_end_time < $eventEndTime) ) {    // zkoumaný event se nepřekrývá s už zaznamenanými eventy
-
-                                        if ($a_type == 'CALL' && !empty($a_item)) {
-                                            $users[$processed_date][$a_iduser][$a_idgroup]["activityTime"] += strtotime($aDay_time_close) - strtotime($aDay_time_open);
-                                            $users[$processed_date][$a_iduser][$a_idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
-                                            $users[$processed_date][$a_iduser][$a_idgroup]["callCount"]    += 1;
-                                            if ($item-> answered == "true") {   // parsuji answered z objektu $item
-                                                $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
-                                            }
-                                        }
-                                        $event1 = [ "time"      =>  $psDay_start_time,
-                                                    "type"      =>  "P",
-                                                    "method"    =>  "+"             
-                                        ];
-                                        $event2 = [ "time"      =>  $psDay_end_time,
-                                                    "type"      =>  "P",
-                                                    "method"    =>  "-"               
-                                        ];
-                                        $events[$processed_date][$ps_iduser][""][] = $event1;           // [""] ... prázdná skupina
-                                        $events[$processed_date][$ps_iduser][""][] = $event2;           // zápis záznamů do pole událostí       
-                                        $eventStartTime = $eventEndTime = NULL;   
-                                    }
-                                }                     
-                            }
+                            $events[$processed_date][$a_iduser][$a_idgroup][] = $event1;        // [""] ... prázdná skupina
+                            $events[$processed_date][$a_iduser][$a_idgroup][] = $event2;        // zápis záznamů do pole událostí  
                         }
                     }
                     $processed_date = dateIncrem($processed_date);  // inkrement data o 1 den
