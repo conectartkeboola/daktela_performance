@@ -292,11 +292,11 @@ foreach ($activities as $aNum => $a) {
                                                     // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
-    $processedDate = $date;
+    $processedDate = $dateOpen;
 
     while ($processedDate <= $dateClose) {          
-        $dayStartTime = max($timeOpen,  $processed_date.' 00:00:00'); 
-        $dayEndTime   = min($timeClose, $processed_date.' 23:59:59');
+        $dayStartTime = max($timeOpen,  $processedDate.' 00:00:00'); 
+        $dayEndTime   = min($timeClose, $processedDate.' 23:59:59');
         if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
             sessionsProcessing ($dayStartTime, $dayEndTime, "A");
         }
