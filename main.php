@@ -175,7 +175,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
             }
         }
     }
-    //addEventPairToArr ($startTested, $endTested, $type);    // zbyde-li po rekurzích nějaký interval, uložím ho do pole $events
+    addEventPairToArr ($startTested, $endTested, $type);    // zbyde-li po rekurzích nějaký interval, uložím ho do pole $events
 }
 // ==============================================================================================================================================================================================
 
