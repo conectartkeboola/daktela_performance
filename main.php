@@ -106,7 +106,7 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type;
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type." ||";
     initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
@@ -213,7 +213,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace queueSessions
-echo "ZAHÁJENA ITERACE QUEUESESSIONS ||";
+echo "ZAHÁJENA ITERACE QUEUESESSIONS || ";
 foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
     if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
     $idinstance = substr($qs[0], 0 ,1);                 // $qs[0] ... idqueuesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
@@ -243,12 +243,12 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den
     }
-} echo "DOKONČENA ITERACE QUEUESESSIONS ||";
+} echo "DOKONČENA ITERACE QUEUESESSIONS || ";
 // ==============================================================================================================================================================================================
 // Get pause sessions + activities + records
 
 // Get pause sessions   (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
-echo "ZAHÁJENA ITERACE PAUSESESSIONS ||";
+echo "ZAHÁJENA ITERACE PAUSESESSIONS || ";
 foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
     if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
     $idinstance = substr($ps[0], 0 ,1);             // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
@@ -277,10 +277,10 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den
     }
-} echo "DOKONČENA ITERACE PAUSESESSIONS ||";      
+} echo "DOKONČENA ITERACE PAUSESESSIONS || ";      
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-echo "ZAHÁJENA ITERACE AKTIVIT ||";
+echo "ZAHÁJENA ITERACE AKTIVIT || ";
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
@@ -314,10 +314,10 @@ foreach ($activities as $aNum => $a) {
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den        
     }
-} echo "DOKONČENA ITERACE AKTIVIT ||";
+} echo "DOKONČENA ITERACE AKTIVIT || ";
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 //Get records
-echo "ZAHÁJENA ITERACE ZÁZNAMŮ (RECORDS) ||";
+echo "ZAHÁJENA ITERACE ZÁZNAMŮ (RECORDS) || ";
 foreach ($records as $rNum => $r) {
     if ($rNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $r[8];
@@ -332,7 +332,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($iduser) || empty($edited) || empty($idstatus)) {echo "nevalidní záznam RECORDS RECORDS "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS "; continue;}   // vyřazení případných neúplných záznamů
 
     if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;} 
                                                     // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
@@ -344,7 +344,7 @@ foreach ($records as $rNum => $r) {
     if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // Zavěsil systém
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // Obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // Odmítnuto
-} echo "DOKONČENA ITERACE ZÁZNAMŮ (RECORDS) ||";
+} echo "DOKONČENA ITERACE ZÁZNAMŮ (RECORDS) || ";
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
