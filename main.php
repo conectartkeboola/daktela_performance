@@ -19,10 +19,10 @@ $reportIntervHistDays = $config['parameters']['reportIntervHistDays'];          
 $tabsIn = ["groups", "queues", "queueSessions", "pauseSessions", "activities", "records"];    // vstupní tabulky
 
 $tabsOut = [                                                                        // výstupní tabulky
-    "users"     =>  ["date", "idgroup", "iduser", "Q", "QA", "QAP", "QP", "P", "AP", "queueSession", "pauseSession",
+    "users"     =>  ["date", "iduser", "idgroup", "Q", "QA", "QAP", "QP", "P", "AP", "queueSession", "pauseSession",
                      "talkTime", "idleTime", "activityTime", "callCount", "callCountAnswered", /*"transactionCount",*/
                      "recordsTouched", "recordsDropped", "recordsTimeout", "recordsBusy", "recordsDenied"],
-    "events"    =>  ["idgroup", "iduser", "time", "type", "method"]
+    "events"    =>  ["iduser", "idgroup", "time", "type", "method"]
 ];         
 $tabsOutList = array_keys($tabsOut);
 // ==============================================================================================================================================================================================
@@ -72,7 +72,6 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
     }
     if (!array_key_exists($idgroup, $users[$date][$iduser])) {
         $users[$date][$iduser][$idgroup] = [    // sestavení záznamu do pole uživatelů
-            "iduser"            => $iduser,
             "Q"                 => NULL,
             "QA"                => NULL,
             "QAP"               => NULL,
@@ -117,9 +116,9 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
                         $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
                         $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
                         if ($item-> answered == "true") {
-                            $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
+                            $users[$processedDate][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }       echo " || \$users[".$processed_date."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
+                    }       echo " || \$users[".$processedDate."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -436,7 +435,7 @@ foreach ($users as $user) {
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $counters) {
-            $colVals = [$date, $idgroup];
+            $colVals = [$date, $iduser, $idgroup];
             foreach ($counters as $attrVal) {
                 $colVals[] = $attrVal;
             }
@@ -450,7 +449,7 @@ foreach ($events as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $evnts) {        
             foreach ($evnts as $evnt) {
-                $colVals = [$idgroup, $iduser];
+                $colVals = [$iduser, $idgroup];
                 foreach ($evnt as $evntVal) { 
                     $colVals[] = $evntVal;
                 }
