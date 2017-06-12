@@ -106,7 +106,7 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;   var_dump($processedDate, $iduser, $idgroup);
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type."<br />";
     initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
