@@ -109,9 +109,9 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
     global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;
     initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
-        case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        /*case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
+        case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
+        case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
+        case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);                       // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
                         $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
@@ -119,7 +119,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
                         if ($item-> answered == "true") {
                             $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }*/
+                    }
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -286,22 +286,22 @@ foreach ($activities as $aNum => $a) {
     $iduser    = $a[6];
     $time      = $a[13];
     $typeAct   = $a[10];
-    $timeOpen  = $a[15];
+    //$timeOpen  = $a[15];
     $timeClose = !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s');
     $itemJson  = $a[19];
 
     $idgroup   = findInArray($idqueue, $queueGroup);
     $date      = substr($time, 0, 10);
-    $dateOpen  = substr($timeOpen,  0, 10);
+    //$dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
-
-    if ($timeOpen < $reportIntervTimes["start"] || $timeOpen > $reportIntervTimes["end"]) {continue;}
+    
+    if ($time < $reportIntervTimes["start"] || $time > $reportIntervTimes["end"]) {continue;}
                                                     // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
-    $processedDate = $dateOpen;
+    $processedDate = $date;
     while ($processedDate <= $dateClose) {          
-        $dayStartTime = max($timeOpen,  $processedDate.' 00:00:00'); 
+        $dayStartTime = max($time,      $processedDate.' 00:00:00'); 
         $dayEndTime   = min($timeClose, dateIncrem($processedDate).' 00:00:00');
         if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
             sessionsProcessing ($dayStartTime, $dayEndTime, "A");
