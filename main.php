@@ -108,15 +108,17 @@ function findInArray ($key, $arr) {
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
     global $events, $processedDate, $iduser, $idgroup, $users, $typeAct, $itemJson, $item;
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
-    if ($type == "A") {
-        if ($typeAct == 'CALL' && !empty($itemJson)) {
-            $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
-            $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
-            $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
-            if ($item-> answered == "true") {                                                   // parsuji answered z objektu $item
-                $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
-            }
-        }
+    switch ($type) {
+        case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
+        case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
+        case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
+                        $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
+                        $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
+                        $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
+                        if ($item-> answered == "true") {                                                   // parsuji answered z objektu $item
+                            $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
+                        }
+                    }
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -159,7 +161,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                         // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
                         if ($startTested >= startSaved && $startTested < $endSaved && $endTested > $endSaved) {
                             //sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu
-                            addEventPairToArr ($$endSaved, $endTested, $type);
+                            addEventPairToArr ($endSaved, $endTested, $type);
                             return; 
                         }
                         // případ 5 - testovaná session oboustranně přesahuje porovnávanou uloženou session
