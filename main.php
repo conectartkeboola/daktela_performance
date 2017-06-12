@@ -62,7 +62,6 @@ function findInArray ($key, $arr) {
 } 
 function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     global $users, $events;    
-    $date = $processedDate;
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
         $users[$date] = [];
@@ -459,9 +458,9 @@ foreach ($users as $date => $daysByUserGroup) {
 // zápis událostí (diagnostický výstup)
 foreach ($events as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
-        foreach ($daysByGroup as $idgroup => $evnts) {
-            if (!array_filter($evnts)) {continue;}                  // vyřazení případných záznamů obsahujících jen prázdné hodnoty
+        foreach ($daysByGroup as $idgroup => $evnts) {            
             foreach ($evnts as $evnt) {
+                if (!array_filter($evnt)) {continue;}               // vyřazení případných záznamů obsahujících jen prázdné hodnoty
                 $colVals = [$iduser, $idgroup];
                 foreach ($evnt as $evntVal) { 
                     $colVals[] = $evntVal;
