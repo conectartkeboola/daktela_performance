@@ -119,7 +119,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
                         if ($item-> answered == "true") {
                             $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }       print_r($users[$processedDate][$iduser][$idgroup]);   
+                    }       echo " || \$users[".$processed_date."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -332,7 +332,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS: "; print_r($r); echo " || "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS: "; /*print_r($r);*/ echo " || "; continue;}   // vyřazení případných neúplných záznamů
 
     if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;} 
                                                     // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
