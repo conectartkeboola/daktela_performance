@@ -60,8 +60,9 @@ function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
 function findInArray ($key, $arr) {
     return array_key_exists($key, $arr) ? $arr[$key] : "";
 } 
-function initUsersAndEventsItems ($date, $iduser, $idgroup) {
-    global $users, $events;    
+function initUsersAndEventsItems (/*$date,*/ $iduser, $idgroup) {
+    global $processedDate, $users, $events;    
+    $date = $processedDate;
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
         $users[$date] = [];
@@ -105,16 +106,17 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $events, $processedDate, $iduser, $idgroup, $users, $typeAct, $itemJsonX, $duration, $answered;
-    initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;
+    initUsersAndEventsItems (/*$processedDate,*/ $iduser, $idgroup);
     switch ($type) {
         case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "A":   if ($typeAct == 'CALL' && !$itemJsonX) {
+        case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
+                        $item = json_decode($itemJson, false);                       // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
-                        $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $duration;
+                        $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
                         $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
-                        if ($answered == "true") {
+                        if ($item-> answered == "true") {
                             $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
                     }
@@ -131,7 +133,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
 function sessionsProcessing ($startTested, $endTested, $type) {         // čas začátku a konce (+ typ) testované session 
-    global $events, $processedDate, $iduser, $idgroup;
+    global $processedDate, $iduser, $idgroup, $events;
     $startSaved = $endSaved = NULL;                                     // čas začátku a konce porovnávané uložené session
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
@@ -287,13 +289,9 @@ foreach ($activities as $aNum => $a) {
     $timeOpen  = $a[15];
     $timeClose = !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s');
     $itemJson  = $a[19];
-    $item      = json_decode($itemJson, false);     // dekódováno z JSONu na objekt
-    $itemJsonX = empty($itemJson);
-    $duration  = !$itemJsonX ? $item->duration : NULL;
-    $answered  = !$itemJsonX ? $item->answered : NULL;
 
     $idgroup   = findInArray($idqueue, $queueGroup);
-    $date      = substr($time, 0, 10); 
+    $date      = substr($time, 0, 10);
     $dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
 
