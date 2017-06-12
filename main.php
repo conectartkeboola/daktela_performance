@@ -60,8 +60,8 @@ function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
 function findInArray ($key, $arr) {
     return array_key_exists($key, $arr) ? $arr[$key] : "";
 } 
-function initUsersAndEventsItems (/*$date,*/ $iduser, $idgroup) {
-    global $processedDate, $users, $events;    
+function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
+    global $processedDate, $iduser, $idgroup, $users, $events;    
     $date = $processedDate;
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
@@ -107,7 +107,7 @@ function initUsersAndEventsItems (/*$date,*/ $iduser, $idgroup) {
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
     global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;
-    initUsersAndEventsItems (/*$processedDate,*/ $iduser, $idgroup);
+    initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
         case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
