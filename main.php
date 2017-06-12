@@ -106,7 +106,7 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;   var_dump($processedDate, $iduser, $idgroup);
     initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
@@ -276,7 +276,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
 }        
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-/*
+
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
@@ -310,7 +310,7 @@ foreach ($activities as $aNum => $a) {
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den        
     }
-}*/
+}
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 //Get records
 
