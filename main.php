@@ -274,7 +274,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
 }        
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-
+/*
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
@@ -308,7 +308,7 @@ foreach ($activities as $aNum => $a) {
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den        
     }
-}     
+}     */
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 //Get records
 
