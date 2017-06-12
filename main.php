@@ -305,7 +305,7 @@ foreach ($activities as $aNum => $a) {
     //$dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
     
-    if (empty($time) || empty($typeAct) || empty($iduser)) {
+    if (empty($time) || empty($typeAct) /*|| empty($iduser)*/) {
         //echo "nevalidní záznam v ACTIVITIES || ";
         continue;                                   // vyřazení případných neúplných záznamů
     }
@@ -340,7 +340,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($iduser) || empty($edited)) {
+    if (empty($edited) /*|| empty($iduser)*/) {
         //echo "nevalidní záznam v RECORDS: ";
         //print_r($r);
         //echo " || ";
