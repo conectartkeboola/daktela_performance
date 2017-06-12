@@ -104,7 +104,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type." || ";
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;             //echo $startTime." | ".$endTime." | ".$type." || ";
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
@@ -305,7 +305,7 @@ foreach ($activities as $aNum => $a) {
     //$dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
     
-    if (empty($time) || empty($typeAct) /*|| empty($iduser)*/) {
+    if (empty($time) || empty($typeAct) || empty($iduser)) {
         //echo "nevalidní záznam v ACTIVITIES || ";
         continue;                                   // vyřazení případných neúplných záznamů
     }
@@ -340,7 +340,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($edited) /*|| empty($iduser)*/) {
+    if (empty($edited) || empty($iduser)) {
         //echo "nevalidní záznam v RECORDS: ";
         //print_r($r);
         //echo " || ";
