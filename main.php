@@ -105,17 +105,17 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $events, $processedDate, $iduser, $idgroup, $users, $typeAct, $itemJson, $item;
+    global $events, $processedDate, $iduser, $idgroup, $users, $typeAct, $itemJsonX, $duration, $answered;
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {
         case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
+        case "A":   if ($typeAct == 'CALL' && !$itemJsonX) {
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
-                        $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;      // parsuji duration z objektu $item
+                        $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $duration;
                         $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
-                        if ($item-> answered == "true") {                                                   // parsuji answered z objektu $item
-                            $users[$processed_date][$a_iduser][$a_idgroup]["callCountAnswered"] += 1;
+                        if ($answered == "true") {
+                            $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
                     }
     }
@@ -274,7 +274,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
 }        
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-/*
+
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
@@ -288,13 +288,16 @@ foreach ($activities as $aNum => $a) {
     $timeClose = !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s');
     $itemJson  = $a[19];
     $item      = json_decode($itemJson, false);     // dekódováno z JSONu na objekt
+    $itemJsonX = empty($itemJson);
+    $duration  = !$itemJsonX ? $item->duration : NULL;
+    $answered  = !$itemJsonX ? $item->answered : NULL;
 
     $idgroup   = findInArray($idqueue, $queueGroup);
     $date      = substr($time, 0, 10); 
     $dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
 
-    if ($timeOpen < $reportIntervTimes["start"] || $timeClose > $reportIntervTimes["end"]) {continue;}
+    if ($timeOpen < $reportIntervTimes["start"] || $timeOpen > $reportIntervTimes["end"]) {continue;}
                                                     // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
@@ -308,7 +311,7 @@ foreach ($activities as $aNum => $a) {
         }
         $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den        
     }
-}     */
+}
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 //Get records
 
