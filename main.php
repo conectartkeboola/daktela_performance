@@ -106,7 +106,7 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type." ||";
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type." || ";
     initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
@@ -124,11 +124,11 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
                 "method"    =>  "+"             
-    ];
+    ];                                              
     $event2 = [ "time"      =>  $endTime,
                 "type"      =>  $type,
                 "method"    =>  "-"               
-    ];
+    ];                                                          print_r($event1); echo " || "; print_r($event2); echo " || ";
     $events[$processedDate][$iduser][$idgroup][] = $event1; 
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
@@ -228,7 +228,7 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);
 
-    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v QUEUESESSIONS "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v QUEUESESSIONS || "; continue;}   // vyřazení případných neúplných záznamů
     
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;}
                                                         // session není ze zkoumaného časového rozsahu
@@ -262,7 +262,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);
 
-    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v PAUSESESSIONS "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v PAUSESESSIONS || "; continue;}   // vyřazení případných neúplných záznamů
     
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;}
                                                     // pauseSession není ze zkoumaného časového rozsahu
@@ -299,7 +299,7 @@ foreach ($activities as $aNum => $a) {
     //$dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
     
-    if (empty($time) || empty($typeAct) || empty($iduser)) {echo "nevalidní záznam v ACTIVITIES "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($time) || empty($typeAct) || empty($iduser)) {echo "nevalidní záznam v ACTIVITIES || "; continue;}   // vyřazení případných neúplných záznamů
     
     if ($time < $reportIntervTimes["start"] || $time > $reportIntervTimes["end"]) {continue;}
                                                     // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
@@ -332,7 +332,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS || "; continue;}   // vyřazení případných neúplných záznamů
 
     if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;} 
                                                     // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
