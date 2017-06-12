@@ -60,8 +60,8 @@ function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
 function findInArray ($key, $arr) {
     return array_key_exists($key, $arr) ? $arr[$key] : "";
 } 
-function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
-    global $processedDate, $iduser, $idgroup, $users, $events;    
+function initUsersAndEventsItems ($date, $iduser, $idgroup) {
+    global $users, $events;    
     $date = $processedDate;
     // inicializace záznamů do pole uživatelů
     if (!array_key_exists($date, $users)) {
@@ -106,7 +106,7 @@ function initUsersAndEventsItems (/*$date, $iduser, $idgroup*/) {
 }
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
     global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;    echo $startTime." | ".$endTime." | ".$type." || ";
-    initUsersAndEventsItems (/*$processedDate, $iduser, $idgroup*/);
+    initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
@@ -118,7 +118,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
                         if ($item-> answered == "true") {
                             $users[$processedDate][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }       echo " || \$users[".$processedDate."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
+                    }   //echo " || \$users[".$processedDate."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -266,20 +266,23 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);
 
-    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v PAUSESESSIONS || "; continue;}   // vyřazení případných neúplných záznamů
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {
+        //echo "nevalidní záznam v PAUSESESSIONS || ";
+        continue;                                   // vyřazení případných neúplných záznamů
+    }
     
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;}
                                                     // pauseSession není ze zkoumaného časového rozsahu
 
     // session je ze zkoumaného časového rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
     $processedDate = $startDate; 
-    while ($processedDate <= $endDate) {                // parceluje delší než 1-denní sessions na části po dnech     
+    while ($processedDate <= $endDate) {            // parceluje delší než 1-denní sessions na části po dnech     
         $dayStartTime = max($startTime, $processedDate.' 00:00:00'); 
         $dayEndTime   = min($endTime  , dateIncrem($processedDate).' 00:00:00');            
-        if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
-            sessionsProcessing ($dayStartTime, $dayEndTime, "P");
+        if ($dayStartTime < $dayEndTime) {          // eliminace nevalidních případů
+            sessionsProcessing($dayStartTime, $dayEndTime, "P");
         }
-        $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den
+        $processedDate = dateIncrem($processedDate);// inkrement data o 1 den
     }
 } echo "DOKONČENA ITERACE PAUSESESSIONS || ";      
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
@@ -303,8 +306,10 @@ foreach ($activities as $aNum => $a) {
     //$dateOpen  = substr($timeOpen,  0, 10);
     $dateClose = substr($timeClose, 0, 10);
     
-    if (empty($time) || empty($typeAct) || empty($iduser)) {echo "nevalidní záznam v ACTIVITIES || "; continue;}   // vyřazení případných neúplných záznamů
-    
+    if (empty($time) || empty($typeAct) || empty($iduser)) {
+        //echo "nevalidní záznam v ACTIVITIES || ";
+        continue;                                   // vyřazení případných neúplných záznamů
+    }
     if ($time < $reportIntervTimes["start"] || $time > $reportIntervTimes["end"]) {continue;}
                                                     // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
 
@@ -313,10 +318,10 @@ foreach ($activities as $aNum => $a) {
     while ($processedDate <= $dateClose) {          
         $dayStartTime = max($time,      $processedDate.' 00:00:00'); 
         $dayEndTime   = min($timeClose, dateIncrem($processedDate).' 00:00:00');
-        if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
-            sessionsProcessing ($dayStartTime, $dayEndTime, "A");
+        if ($dayStartTime < $dayEndTime) {          // eliminace nevalidních případů
+            sessionsProcessing($dayStartTime, $dayEndTime, "A");
         }
-        $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den        
+        $processedDate = dateIncrem($processedDate);// inkrement data o 1 den        
     }
 } echo "DOKONČENA ITERACE AKTIVIT || ";
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
@@ -336,18 +341,21 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($iduser) || empty($edited)) {echo "nevalidní záznam v RECORDS: "; /*print_r($r);*/ echo " || "; continue;}   // vyřazení případných neúplných záznamů
-
-    if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;} 
-                                                    // záznam není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
+    if (empty($iduser) || empty($edited)) {
+        //echo "nevalidní záznam v RECORDS: ";
+        //print_r($r);
+        //echo " || ";
+        continue;                                   // vyřazení případných neúplných záznamů
+    }    
+    if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;}   // záznam není ze zkoumaného časového rozsahu
 
     // záznam je ze zkoumaného časového rozsahu
-    initUsersAndEventsItems ($editedDate, $iduser, $idgroup);                
+    initUsersAndEventsItems($editedDate, $iduser, $idgroup);                
     if (!empty($idcall))         { $users[$editedDate][$iduser][$idgroup]["recordsTouched"] ++; }
-    if ($idstatus == '00000021') { $users[$editedDate][$iduser][$idgroup]["recordsDropped"] ++; }   // Zavěsil zákazník
-    if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // Zavěsil systém
-    if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // Obsazeno
-    if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // Odmítnuto
+    if ($idstatus == '00000021') { $users[$editedDate][$iduser][$idgroup]["recordsDropped"] ++; }   // zavěsil zákazník
+    if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // zavěsil systém
+    if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // obsazeno
+    if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // odmítnuto
 } echo "DOKONČENA ITERACE ZÁZNAMŮ (RECORDS) || ";
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
@@ -364,10 +372,8 @@ foreach ($users as $date => $daysByUserGroup) {
 // ==============================================================================================================================================================================================
 //Do the events magic
 
-foreach ($events as $date => $daysByUserGroup) {  
-
-   foreach ($daysByUserGroup as $iduser => $daysByGroup) {
-    
+foreach ($events as $date => $daysByUserGroup) {
+   foreach ($daysByUserGroup as $iduser => $daysByGroup) { 
         foreach ($daysByGroup as $idgroup => $evnts) {          // sort pole událostí podle času v rámci dnů
             
             usort($evnts, function($a, $b) {
@@ -440,6 +446,7 @@ foreach ($users as $user) {
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $counters) {
+            if (!array_filter($counters)) {continue;}               // vyřazení případných záznamů obsahujících jen prázdné hodnoty
             $colVals = [$date, $iduser, $idgroup];
             foreach ($counters as $attrVal) {
                 $colVals[] = $attrVal;
@@ -452,7 +459,8 @@ foreach ($users as $date => $daysByUserGroup) {
 // zápis událostí (diagnostický výstup)
 foreach ($events as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
-        foreach ($daysByGroup as $idgroup => $evnts) {        
+        foreach ($daysByGroup as $idgroup => $evnts) {
+            if (!array_filter($evnts)) {continue;}                  // vyřazení případných záznamů obsahujících jen prázdné hodnoty
             foreach ($evnts as $evnt) {
                 $colVals = [$iduser, $idgroup];
                 foreach ($evnt as $evntVal) { 
