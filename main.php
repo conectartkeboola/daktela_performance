@@ -111,7 +111,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
     switch ($type) {
         case "Q":   $user[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $user[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
+        /*case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);                       // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
                         $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
@@ -119,7 +119,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
                         if ($item-> answered == "true") {
                             $users[$processed_date][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }
+                    }*/
     }
     $event1 = [ "time"      =>  $startTime,
                 "type"      =>  $type,
@@ -300,7 +300,6 @@ foreach ($activities as $aNum => $a) {
 
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
     $processedDate = $dateOpen;
-
     while ($processedDate <= $dateClose) {          
         $dayStartTime = max($timeOpen,  $processedDate.' 00:00:00'); 
         $dayEndTime   = min($timeClose, dateIncrem($processedDate).' 00:00:00');
