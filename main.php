@@ -238,7 +238,7 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
 // Get pause sessions + activities + records
 
 // Get pause sessions   (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
-/*
+
 foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
     if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
     $idinstance = substr($ps[0], 0 ,1);             // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
@@ -268,7 +268,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
 }        
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-
+/*
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
