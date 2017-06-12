@@ -238,7 +238,7 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
 // Get pause sessions + activities + records
 
 // Get pause sessions   (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
-
+/*
 foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
     if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
     $idinstance = substr($ps[0], 0 ,1);             // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
@@ -311,11 +311,11 @@ foreach ($records as $rNum => $r) {
     $idinstance = $r[8];
     if ($idinstance != '3') {continue;}             // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
-    $iduser     = $r[1];
-    $idqueue    = $r[2];
-    $edited     = $r[6];
-    $idstatus   = $r[3];
-    $idcall     = $r[5];
+    $iduser   = $r[1];
+    $idqueue  = $r[2];
+    $edited   = $r[6];
+    $idstatus = $r[3];
+    $idcall   = $r[5];
 
     if (empty($iduser) || empty($edited) || empty($idstatus)) {continue;}   // vyřazení případných neúplných záznamů
 
@@ -332,7 +332,7 @@ foreach ($records as $rNum => $r) {
     if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // Zavěsil systém
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // Obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // Odmítnuto
-}
+}*/
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
