@@ -187,7 +187,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
             }
         }
     }
-    if (!$sessionOverlay) {addEventPairToArr($startTested, $endTested, $type));}    // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+    if (!$sessionOverlay) {addEventPairToArr($startTested, $endTested, $type);}     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
 // ==============================================================================================================================================================================================
 
