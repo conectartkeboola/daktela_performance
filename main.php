@@ -54,6 +54,12 @@ foreach ($tabsOut as $tab => $cols) {
 // ==============================================================================================================================================================================================
 // funkce
 
+function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
+    return date('Y-m-d',(strtotime($days.' day', strtotime($datum))));
+}
+function findInArray ($key, $arr) {
+    return array_key_exists($key, $arr) ? $arr[$key] : "";
+} 
 function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     global $users, $events;    
     // inicializace záznamů do pole uživatelů
@@ -63,8 +69,8 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     if (!array_key_exists($iduser, $users[$date])) {
         $users[$date][$iduser] = [];
     }
-    if (/*!empty($idgroup) &&*/ !array_key_exists($idgroup, $users[$date][$iduser])) {
-        $user = [                                   // sestavení záznamu do pole uživatelů
+    if (!array_key_exists($idgroup, $users[$date][$iduser])) {
+        $users[$date][$iduser][$idgroup] = [    // sestavení záznamu do pole uživatelů
             "iduser"            => $iduser,
             "Q"                 => NULL,
             "QA"                => NULL,
@@ -73,7 +79,7 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
             "P"                 => NULL,
             "AP"                => NULL,
             "queueSession"      => NULL,
-            "pauseSession"      => NULL,           // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+            "pauseSession"      => NULL,        // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
             "talkTime"          => NULL,
             "idleTime"          => NULL,                            
             "activityTime"      => NULL,
@@ -86,7 +92,6 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
             "recordsBusy"       => NULL,
             "recordsDenied"     => NULL
         ];
-        $users[$date][$iduser][$idgroup] = $user;
     }   
     // inicializace záznamů do pole událostí
     if (!array_key_exists($date, $events)) {
@@ -99,12 +104,6 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
         $events[$date][$iduser][$idgroup] = [];
     }
 }
-function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
-    return date('Y-m-d',(strtotime($days.' day', strtotime($datum))));
-}
-function findInArray ($key, $arr) {
-    return array_key_exists($key, $arr) ? $arr[$key] : "";
-} 
 function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
     global $events, $processedDate, $iduser, $idgroup, $users, $typeAct, $itemJson, $item;
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
@@ -234,7 +233,7 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
     $processedDate = $startDate; 
     while ($processedDate <= $endDate) {                // parceluje delší než 1-denní sessions na části po dnech     
         $dayStartTime = max($startTime, $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($endTime  , $processedDate.' 23:59:59');            
+        $dayEndTime   = min($endTime  , dateIncrem($processedDate).' 00:00:00');            
         if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
             sessionsProcessing ($dayStartTime, $dayEndTime, "Q");
         }
@@ -266,7 +265,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
     $processedDate = $startDate; 
     while ($processedDate <= $endDate) {                // parceluje delší než 1-denní sessions na části po dnech     
         $dayStartTime = max($startTime, $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($endTime  , $processedDate.' 23:59:59');            
+        $dayEndTime   = min($endTime  , dateIncrem($processedDate).' 00:00:00');            
         if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
             sessionsProcessing ($dayStartTime, $dayEndTime, "P");
         }
@@ -275,7 +274,7 @@ foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions a
 }        
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // Get activities
-/*
+
 foreach ($activities as $aNum => $a) {
     if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
     $idinstance = $a[18];
@@ -303,7 +302,7 @@ foreach ($activities as $aNum => $a) {
 
     while ($processedDate <= $dateClose) {          
         $dayStartTime = max($timeOpen,  $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($timeClose, $processedDate.' 23:59:59');
+        $dayEndTime   = min($timeClose, dateIncrem($processedDate).' 00:00:00');
         if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
             sessionsProcessing ($dayStartTime, $dayEndTime, "A");
         }
@@ -339,7 +338,7 @@ foreach ($records as $rNum => $r) {
     if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // Zavěsil systém
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // Obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // Odmítnuto
-}*/
+}
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
