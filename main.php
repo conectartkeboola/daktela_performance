@@ -147,9 +147,13 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                             //sessionsProcessing ($startTested, $endTested, $type);   // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($startTested, $endTested, $type);
                             $startSaved = $endSaved = NULL;
+                            break; 
+                        }
+                        else {
+                            $startSaved = $endSaved = NULL;
                             return; 
                         }
-                        // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
+                    /*  // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
                         if ($startTested >= $startSaved && $startTested < $endSaved && $endTested <= $endSaved) {
                             $sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
@@ -180,7 +184,8 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                             $sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
                             return; 
-                        }
+                        } 
+                    */
                     }                     
                 }
             }
