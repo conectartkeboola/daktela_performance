@@ -11,9 +11,10 @@ $dataDir    = getenv("KBC_DATADIR");
 $configFile = $dataDir."config.json";
 $config     = json_decode(file_get_contents($configFile), true);
 
-// časový rozsah historie pro tvorbu reportu
-$reportIntervHistDays = $config['parameters']['reportIntervHistDays'];              // pole má klíče "start" a "end", kde musí být "start" >= "end"
-
+// parametry importované z konfiguračního JSON v KBC
+$reportIntervHistDays = $config['parameters']['reportIntervHistDays'];  // čas. rozsah historie pro tvorbu reportu - pole má klíče "start" a "end", kde musí být "start" >= "end"
+$diagOutOptions       = $config['parameters']['diagOutOptions'];        // diag. výstup do logu Jobs v KBC - klíče: "basicStatusInfo", "queueGroupDump", "usersActivitiesDump", ...
+                                                                        //                                 ... "eventsDump", "invalidRowsInfo", "invalidRowsDump", "eventsOutTable"
 // ==============================================================================================================================================================================================
 
 $tabsIn = ["groups", "queues", "queueSessions", "pauseSessions", "activities", "records"];    // vstupní tabulky
@@ -54,7 +55,7 @@ foreach ($tabsOut as $tab => $cols) {
 // ==============================================================================================================================================================================================
 // funkce
 
-function dateIncrem ($datum, $days = 1) {       // inkrement data o $days dní
+function dateIncrem ($datum, $days = 1) {                   // inkrement data o $days dní
     return date('Y-m-d',(strtotime($days.' day', strtotime($datum))));
 }
 function findInArray ($key, $arr) {
@@ -63,22 +64,17 @@ function findInArray ($key, $arr) {
 function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     global $users, $events;    
     // inicializace záznamů do pole uživatelů
-    if (!array_key_exists($date, $users)) {
-        $users[$date] = [];
-    }
-    if (!array_key_exists($iduser, $users[$date])) {
-        $users[$date][$iduser] = [];
-    }
-    if (!array_key_exists($idgroup, $users[$date][$iduser])) {
-        $users[$date][$iduser][$idgroup] = [    // sestavení záznamu do pole uživatelů
-            "Q"                 => NULL,
+    if (!array_key_exists($date,    $users))                 {$users[$date]                    = []; }
+    if (!array_key_exists($iduser,  $users[$date]))          {$users[$date][$iduser]           = []; }
+    if (!array_key_exists($idgroup, $users[$date][$iduser])) {$users[$date][$iduser][$idgroup] =
+        [   "Q"                 => NULL,                    // sestavení záznamu do pole uživatelů
             "QA"                => NULL,
             "QAP"               => NULL,
             "QP"                => NULL,
             "P"                 => NULL,
             "AP"                => NULL,
             "queueSession"      => NULL,
-            "pauseSession"      => NULL,        // pauseSessions nezávisí na skupinách -> počítají se v prázdné skupině
+            "pauseSession"      => NULL,
             "talkTime"          => NULL,
             "idleTime"          => NULL,                            
             "activityTime"      => NULL,
@@ -93,46 +89,43 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
         ];
     }   
     // inicializace záznamů do pole událostí
-    if (!array_key_exists($date, $events)) {
-        $events[$date] = [];
-    }
-    if (!array_key_exists($iduser, $events[$date])) {
-        $events[$date][$iduser] = [];
-    }
-    if (!array_key_exists($idgroup, $events[$date][$iduser])) {
-        $events[$date][$iduser][$idgroup] = [];
-    }
+    if (!array_key_exists($date,    $events))                 {$events[$date]                   = []; }
+    if (!array_key_exists($iduser,  $events[$date]))          {$events[$date][$iduser]          = []; }
+    if (!array_key_exists($idgroup, $events[$date][$iduser])) {$events[$date][$iduser][$idgroup]= []; }
 }
-function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson;             //echo $startTime." | ".$endTime." | ".$type." || ";
+function addEventPairToArr ($startTime, $endTime, $type) {              // zápis páru událostí (začátek - konec) do pole událostí
+    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson, $diagOutOptions;
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
-                        $item = json_decode($itemJson, false);                       // dekódováno z JSONu na objekt
+                        $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
                         $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
                         $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
                         if ($item-> answered == "true") {
                             $users[$processedDate][$iduser][$idgroup]["callCountAnswered"] += 1;
                         }
-                    }   //echo " || \$users[".$processedDate."][".$iduser."][".$idgroup."] = "; print_r($users[$processedDate][$iduser][$idgroup]);   
+                    }
+                    if ($diagOutOptions["usersActivitiesDump"]) {       // volitelný diagnostický výstup do logu
+                        echo " \$users[".$processedDate."][".$iduser."][".$idgroup."] = ";
+                        print_r($users[$processedDate][$iduser][$idgroup]);   
+                        echo " || ";
+                    }
     }
-    $event1 = [ "time"      =>  $startTime,
-                "type"      =>  $type,
-                "method"    =>  "+"             
-    ];                                              
-    $event2 = [ "time"      =>  $endTime,
-                "type"      =>  $type,
-                "method"    =>  "-"               
-    ];                                                                  // print_r($event1); echo " || "; print_r($event2); echo " || ";;
+    $event1 = [ "time" => $startTime, "type" => $type, "method" => "+"];                                              
+    $event2 = [ "time" => $endTime,   "type" => $type, "method" => "-"];    
+    if ($diagOutOptions["eventsDump"]) {                                // volitelný diagnostický výstup do logu
+        echo "\$startTime = ".$startTime." | \$endTime = ".$endTime." | \$type = ".$type." || ";
+        print_r($event1); echo " || ";
+        print_r($event2); echo " || ";
+    }    
     $events[$processedDate][$iduser][$idgroup][] = $event1; 
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
 function sessionsProcessing ($startTested, $endTested, $type) {         // čas začátku a konce (+ typ) testované session 
     global $processedDate, $iduser, $idgroup, $events;
-    //$sessionOverlay = false;
     $startSaved = $endSaved = NULL;                                     // čas začátku a konce porovnávané uložené session
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
@@ -144,43 +137,30 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                         // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
                         if (($startTested <  $startSaved && $endTested <= $startSaved) ||
                             ($startTested >= $endSaved   && $endTested >  $endSaved) ) {
-                            //addEventPairToArr ($startTested, $endTested, $type);
                             $startSaved = $endSaved = NULL;             
-                            continue;                                   // přechod k další uložené session
+                            continue;       // testovaná session se s uloženou session nepřekrývá -> přechod k další uložené session
                         }
-                    /*    else {
-                            $startSaved = $endSaved = NULL;
-                            return; 
-                        }
-                    */  // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
+                        // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
                         if ($startTested >= $startSaved && $startTested < $endSaved && $endTested <= $endSaved) {
-                            //$sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
-                            return;                                                 // testovaná sessiun už je celá v poli $sessions
+                            return;        // testovaná session už je celá v poli $sessions -> return z funkce bez žádné akce
                         }
                         // případ 3 - testovaná session zleva zasahuje do porovnávané uložené session
                         if ($startTested < $startSaved && $endTested > $startSaved && $endTested <= $endSaved) {
-                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu
-                            //addEventPairToArr ($startTested, $startSaved, $type);
-                            //$sessionOverlay = true;
+                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého podintervalu
                             $startSaved = $endSaved = NULL;
                             return; 
                         }
                         // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
                         if ($startTested >= $startSaved && $startTested < $endSaved && $endTested > $endSaved) {
-                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu
-                            //addEventPairToArr ($endSaved, $endTested, $type);
-                            //$sessionOverlay = true;
+                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého podintervalu
                             $startSaved = $endSaved = NULL; 
                             return; 
                         }
                         // případ 5 - testovaná session oboustranně přesahuje porovnávanou uloženou session
                         if ($startTested < $startSaved && $endTested > $endSaved) {
-                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu 1
-                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu 2
-                            //addEventPairToArr ($startTested, $startSaved, $type);
-                            //addEventPairToArr ($endSaved, $endTested, $type);
-                            //$sessionOverlay = true;
+                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého podintervalu 1
+                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého podintervalu 2
                             $startSaved = $endSaved = NULL; 
                             return; 
                         } 
@@ -189,13 +169,27 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
             }
         }
     }
-    /*if (!$sessionOverlay) {*/addEventPairToArr($startTested, $endTested, $type);//} // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+    addEventPairToArr($startTested, $endTested, $type);     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+}
+function sesionDayParcelation ($startTime, $endTime, $type) {    
+    $startDate = substr($startTime, 0, 10);
+    $endDate   = substr($endTime,   0, 10);        
+    $processedDate = $startDate;
+    while ($processedDate <= $endDate) {          
+        $dayStartTime = max($startTime,           $processedDate .' 00:00:00'); 
+        $dayEndTime   = min($endTime,  dateIncrem($processedDate).' 00:00:00');
+        if ($dayStartTime < $dayEndTime) {                  // eliminace nevalidních případů
+            sessionsProcessing($dayStartTime, $dayEndTime, $type);
+        }
+        $processedDate = dateIncrem($processedDate);        // inkrement data o 1 den        
+    }
 }
 // ==============================================================================================================================================================================================
 
-$users = $events = $queueGroup = [];                       // inicializace polí
+$users = $events = $queueGroup = [];                        // inicializace polí
 
 // iterace queues -> sestavení pole párů fronta-skupina
+echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUES & GROUPS || " : "";          // volitelný diagnostický výstup do logu
 
 foreach ($queues as $qNum => $q) {                          // iterace řádků tabulky front
     if ($qNum == 0) {continue;}                             // vynechání hlavičky tabulky
@@ -216,11 +210,19 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         $idgroup = "";                                      // fronta není přiřazena do žádné skupiny
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
-}   echo "\$queueGroup = "; print_r($queueGroup); echo " || ";
+}
+echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠĚ SESTAVENO || " : "";   // volitelný diagnostický výstup do logu
+if ($diagOutOptions["queueGroupDump"]) {                    // volitelný diagnostický výstup do logu
+    echo "\$queueGroup = ";
+    print_r($queueGroup);
+    echo " || ";
+}
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace queueSessions
-echo "ZAHÁJENA ITERACE QUEUESESSIONS || ";
-foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessions as $qs)
+
+echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUESESSIONS || " : "";    // volitelný diagnostický výstup do logu
+
+foreach ($queueSessions as $qsNum => $qs) {
     if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
     $idinstance = substr($qs[0], 0 ,1);                 // $qs[0] ... idqueuesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
     if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
@@ -229,71 +231,51 @@ foreach ($queueSessions as $qsNum => $qs) {             // foreach ($queueSessio
     $endTime   = !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s');
     $idqueue   = $qs[4];
     $iduser    = $qs[5];
-
     $idgroup   = findInArray($idqueue, $queueGroup);
-    $startDate = substr($startTime, 0, 10);
-    $endDate   = substr($endTime,   0, 10);
 
-    if (empty($startTime) || empty($endTime) || empty($iduser)) {echo "nevalidní záznam v QUEUESESSIONS || "; continue;}   // vyřazení případných neúplných záznamů
-    
-    if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;}
-                                                        // session není ze zkoumaného časového rozsahu
-
-    // session je ze zkoumaného časového rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
-    $processedDate = $startDate; 
-    while ($processedDate <= $endDate) {                // parceluje delší než 1-denní sessions na části po dnech     
-        $dayStartTime = max($startTime, $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($endTime  , dateIncrem($processedDate).' 00:00:00');            
-        if ($dayStartTime < $dayEndTime) {              // eliminace nevalidních případů
-            sessionsProcessing ($dayStartTime, $dayEndTime, "Q");
-        }
-        $processedDate = dateIncrem ($processedDate);   // inkrement data o 1 den
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v QUEUESESSIONS | "; }
+        if ($diagOutOptions["invalidRowsDump"]) {echo "\$qs = "; print_r($qs); }
+        if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
+        continue;        
     }
-} echo "DOKONČENA ITERACE QUEUESESSIONS || ";
-// ==============================================================================================================================================================================================
-// Get pause sessions + activities + records
+    if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu
 
-// Get pause sessions   (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
-echo "ZAHÁJENA ITERACE PAUSESESSIONS || ";
-foreach ($pauseSessions as $psNum => $ps) {         // foreach ($pauseSessions as $ps) {
-    if ($psNum == 0) {continue;}                    // vynechání hlavičky tabulky
-    $idinstance = substr($ps[0], 0 ,1);             // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
-    if ($idinstance != '3') {continue;}             // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    sesionDayParcelation ($startTime, $endTime, "Q");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
+}
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS || ZAHÁJENA ITERACE PAUSESESSIONS || " : "";     // volitelný diagnostický výstup do logu
+// ==============================================================================================================================================================================================
+// iterace pauseSessions + activities + records
+// iterace pauseSessions  (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
+
+foreach ($pauseSessions as $psNum => $ps) {
+    if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
+    $idinstance = substr($ps[0], 0 ,1);                 // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $startTime = $ps[1];
     $endTime   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
     $iduser    = $ps[5];
-    $idgroup   = "";                                // pauseSessions nejsou vázané na skupinu -> je použita prázdná skupina
-
-    $startDate = substr($startTime, 0, 10);
-    $endDate   = substr($endTime,   0, 10);
-
-    if (empty($startTime) || empty($endTime) || empty($iduser)) {
-        //echo "nevalidní záznam v PAUSESESSIONS || ";
-        continue;                                   // vyřazení případných neúplných záznamů
-    }
+    $idgroup   = "";                                    // pauseSessions nejsou vázané na skupinu -> je použita prázdná skupina
     
-    if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;}
-                                                    // pauseSession není ze zkoumaného časového rozsahu
-
-    // session je ze zkoumaného časového rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
-    $processedDate = $startDate; 
-    while ($processedDate <= $endDate) {            // parceluje delší než 1-denní sessions na části po dnech     
-        $dayStartTime = max($startTime, $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($endTime  , dateIncrem($processedDate).' 00:00:00');            
-        if ($dayStartTime < $dayEndTime) {          // eliminace nevalidních případů
-            sessionsProcessing($dayStartTime, $dayEndTime, "P");
-        }
-        $processedDate = dateIncrem($processedDate);// inkrement data o 1 den
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v PAUSESESSIONS | "; }
+        if ($diagOutOptions["invalidRowsDump"]) {echo "\$ps = "; print_r($ps); }
+        if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
+        continue;        
     }
-} echo "DOKONČENA ITERACE PAUSESESSIONS || ";      
+    if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu 
+    
+    sesionDayParcelation ($startTime, $endTime, "P");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
+}
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS || ZAHÁJENA ITERACE AKTIVIT || " : "";   // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
-// Get activities
-echo "ZAHÁJENA ITERACE AKTIVIT || ";
+// iterace activities
+
 foreach ($activities as $aNum => $a) {
-    if ($aNum == 0) {continue;}                     // vynechání hlavičky tabulky
+    if ($aNum == 0) {continue;}                         // vynechání hlavičky tabulky
     $idinstance = $a[18];
-    if ($idinstance != '3') {continue;}             // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $idqueue   = $a[5];
     $iduser    = $a[6];
@@ -302,37 +284,28 @@ foreach ($activities as $aNum => $a) {
     //$timeOpen  = $a[15];
     $timeClose = !empty($a[16]) ? $a[16] : date('Y-m-d H:i:s');
     $itemJson  = $a[19];
-
     $idgroup   = findInArray($idqueue, $queueGroup);
-    $date      = substr($time, 0, 10);
     //$dateOpen  = substr($timeOpen,  0, 10);
-    $dateClose = substr($timeClose, 0, 10);
     
-    if (empty($time) || empty($typeAct) || empty($iduser)) {
-        //echo "nevalidní záznam v ACTIVITIES || ";
-        continue;                                   // vyřazení případných neúplných záznamů
+    if (empty($time) || empty($typeAct) || empty($iduser)) {    // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v ACTIVITIES | "; }
+        if ($diagOutOptions["invalidRowsDump"]) {echo "\$a = "; print_r($a); }
+        if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
+        continue;        
     }
-    if ($time < $reportIntervTimes["start"] || $time > $reportIntervTimes["end"]) {continue;}
-                                                    // aktivita není ze zkoumaného časového rozsahu nebo se netýká dané skupiny či uživatele
+    if ($time < $reportIntervTimes["start"] || $time > $reportIntervTimes["end"]) {continue;} // aktivita není ze zkoumaného časového rozsahu
 
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
-    $processedDate = $date;
-    while ($processedDate <= $dateClose) {          
-        $dayStartTime = max($time,      $processedDate.' 00:00:00'); 
-        $dayEndTime   = min($timeClose, dateIncrem($processedDate).' 00:00:00');
-        if ($dayStartTime < $dayEndTime) {          // eliminace nevalidních případů
-            sessionsProcessing($dayStartTime, $dayEndTime, "A");
-        }
-        $processedDate = dateIncrem($processedDate);// inkrement data o 1 den        
-    }
-} echo "DOKONČENA ITERACE AKTIVIT || ";
+    sesionDayParcelation ($time, $timeClose, "A");   
+} 
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE AKTIVIT || ZAHÁJENA ITERACE RECORDS || " : ""; // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
-//Get records
-echo "ZAHÁJENA ITERACE ZÁZNAMŮ (RECORDS) || ";
+// iterace records
+
 foreach ($records as $rNum => $r) {
-    if ($rNum == 0) {continue;}                     // vynechání hlavičky tabulky
+    if ($rNum == 0) {continue;}                         // vynechání hlavičky tabulky
     $idinstance = $r[8];
-    if ($idinstance != '3') {continue;}             // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $iduser   = $r[1];
     $idqueue  = $r[2];
@@ -343,22 +316,23 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($edited) || empty($iduser)) {
-        //echo "nevalidní záznam v RECORDS: ";
-        //print_r($r);
-        //echo " || ";
-        continue;                                   // vyřazení případných neúplných záznamů
-    }    
+    if (empty($edited) || empty($iduser)) {             // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v RECORDS | "; }
+        if ($diagOutOptions["invalidRowsDump"]) {echo "\$r = "; print_r($r); }
+        if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
+        continue;        
+    }
     if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;}   // záznam není ze zkoumaného časového rozsahu
 
     // záznam je ze zkoumaného časového rozsahu
-    initUsersAndEventsItems($editedDate, $iduser, $idgroup);                
+    initUsersAndEventsItems($editedDate, $iduser, $idgroup);
     if (!empty($idcall))         { $users[$editedDate][$iduser][$idgroup]["recordsTouched"] ++; }
     if ($idstatus == '00000021') { $users[$editedDate][$iduser][$idgroup]["recordsDropped"] ++; }   // zavěsil zákazník
     if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // zavěsil systém
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // odmítnuto
-} echo "DOKONČENA ITERACE ZÁZNAMŮ (RECORDS) || ";
+}
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE RECORDS || " : "";                     // volitelný diagnostický výstup do logu
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
@@ -372,7 +346,7 @@ foreach ($users as $date => $daysByUserGroup) {
     }
 }*/
 // ==============================================================================================================================================================================================
-//Do the events magic
+// events magic
 
 foreach ($events as $date => $daysByUserGroup) {
    foreach ($daysByUserGroup as $iduser => $daysByGroup) { 
@@ -381,7 +355,7 @@ foreach ($events as $date => $daysByUserGroup) {
             usort($evnts, function($a, $b) {
                 return strcmp($a["time"], $b["time"]);
             });
-
+            
             $times = [                                          // časy pro uspořádanou trojici [datum; skupina; uživatel]
                 "Q"         => NULL,
                 "QA"        => NULL,
@@ -421,7 +395,7 @@ foreach ($events as $date => $daysByUserGroup) {
     }
 }        
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
-// Count idle time
+// count idle time
 
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
@@ -431,7 +405,7 @@ foreach ($users as $date => $daysByUserGroup) {
     }
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
-// Count transactions
+// count transactions
 /*
 foreach ($users as $user) {
     //$userObject = TableRegistry::get('LogUser')->find()->where(['pbx_name' => $user->name, 'idpbxinstance' => 3])->first();
@@ -458,20 +432,22 @@ foreach ($users as $date => $daysByUserGroup) {
     }    
 }
 
-// zápis událostí (diagnostický výstup)
-foreach ($events as $date => $daysByUserGroup) {
-    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
-        foreach ($daysByGroup as $idgroup => $evnts) {            
-            foreach ($evnts as $evnt) {
-                if (!array_filter($evnt)) {continue;}               // vyřazení případných záznamů obsahujících jen prázdné hodnoty
-                $colVals = [$iduser, $idgroup];
-                foreach ($evnt as $evntVal) { 
-                    $colVals[] = $evntVal;
-                }
-                $out_events -> writeRow($colVals);
-            }        
-        }
-    }    
+// zápis událostí (volitelný diagnostický výstup)
+if ($diagOutOptions["eventsOutTable"]) {
+    foreach ($events as $date => $daysByUserGroup) {
+        foreach ($daysByUserGroup as $iduser => $daysByGroup) {
+            foreach ($daysByGroup as $idgroup => $evnts) {            
+                foreach ($evnts as $evnt) {
+                    if (!array_filter($evnt)) {continue;}               // vyřazení případných záznamů obsahujících jen prázdné hodnoty
+                    $colVals = [$iduser, $idgroup];
+                    foreach ($evnt as $evntVal) { 
+                        $colVals[] = $evntVal;
+                    }
+                    $out_events -> writeRow($colVals);
+                }        
+            }
+        }    
+    }
 }
 
 ?>
