@@ -156,7 +156,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                             return;                                                 // testovaná sessiun už je celá v poli $sessions
                         }
                         // případ 3 - testovaná session zleva zasahuje do porovnávané uložené session
-                        if ($startTested < $startSaved && $endTested > $startSaved && endTested <= $endSaved) {
+                        if ($startTested < $startSaved && $endTested > $startSaved && $endTested <= $endSaved) {
                             //sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($startTested, $startSaved, $type);
                             $sessionOverlay = true;
@@ -164,7 +164,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                             return; 
                         }
                         // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
-                        if ($startTested >= startSaved && $startTested < $endSaved && $endTested > $endSaved) {
+                        if ($startTested >= $startSaved && $startTested < $endSaved && $endTested > $endSaved) {
                             //sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($endSaved, $endTested, $type);
                             $sessionOverlay = true;
@@ -213,7 +213,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
         $idgroup = "";                                      // fronta není přiřazena do žádné skupiny
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
-}
+}   echo "\$queueGroup = "; print_r($queueGroup); echo " || ";
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace queueSessions
 echo "ZAHÁJENA ITERACE QUEUESESSIONS || ";
