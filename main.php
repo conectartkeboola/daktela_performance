@@ -132,7 +132,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {  // zápis páru udá
 }
 function sessionsProcessing ($startTested, $endTested, $type) {         // čas začátku a konce (+ typ) testované session 
     global $processedDate, $iduser, $idgroup, $events;
-    $sessionOverlay = false;
+    //$sessionOverlay = false;
     $startSaved = $endSaved = NULL;                                     // čas začátku a konce porovnávané uložené session
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
@@ -144,54 +144,52 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                         // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
                         if (($startTested <  $startSaved && $endTested <= $startSaved) ||
                             ($startTested >= $endSaved   && $endTested >  $endSaved) ) {
-                            //sessionsProcessing ($startTested, $endTested, $type);   // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($startTested, $endTested, $type);
                             $startSaved = $endSaved = NULL;
                             break; 
                         }
-                        else {
+                    /*    else {
                             $startSaved = $endSaved = NULL;
                             return; 
                         }
-                    /*  // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
+                    */  // případ 2 - testovaná session leží celá uvnitř porovnávané uložené session
                         if ($startTested >= $startSaved && $startTested < $endSaved && $endTested <= $endSaved) {
-                            $sessionOverlay = true;
+                            //$sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
                             return;                                                 // testovaná sessiun už je celá v poli $sessions
                         }
                         // případ 3 - testovaná session zleva zasahuje do porovnávané uložené session
                         if ($startTested < $startSaved && $endTested > $startSaved && $endTested <= $endSaved) {
-                            //sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu
+                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($startTested, $startSaved, $type);
-                            $sessionOverlay = true;
+                            //$sessionOverlay = true;
                             $startSaved = $endSaved = NULL;
                             return; 
                         }
                         // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
                         if ($startTested >= $startSaved && $startTested < $endSaved && $endTested > $endSaved) {
-                            //sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu
+                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu
                             //addEventPairToArr ($endSaved, $endTested, $type);
-                            $sessionOverlay = true;
+                            //$sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
                             return; 
                         }
                         // případ 5 - testovaná session oboustranně přesahuje porovnávanou uloženou session
                         if ($startTested < $startSaved && $endTested > $endSaved) {
-                            //sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu 1
-                            //sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu 2
+                            sessionsProcessing ($startTested, $startSaved, $type);  // rekurzivní test zbylého intervalu 1
+                            sessionsProcessing ($endSaved, $endTested, $type);      // rekurzivní test zbylého intervalu 2
                             //addEventPairToArr ($startTested, $startSaved, $type);
                             //addEventPairToArr ($endSaved, $endTested, $type);
-                            $sessionOverlay = true;
+                            //$sessionOverlay = true;
                             $startSaved = $endSaved = NULL; 
                             return; 
                         } 
-                    */
                     }                     
                 }
             }
         }
     }
-    if (!$sessionOverlay) {addEventPairToArr($startTested, $endTested, $type);}     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+    /*if (!$sessionOverlay) {*/addEventPairToArr($startTested, $endTested, $type);//}     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
 // ==============================================================================================================================================================================================
 
