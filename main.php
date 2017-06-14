@@ -145,8 +145,8 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                         if (($startTested <  $startSaved && $endTested <= $startSaved) ||
                             ($startTested >= $endSaved   && $endTested >  $endSaved) ) {
                             //addEventPairToArr ($startTested, $endTested, $type);
-                            $startSaved = $endSaved = NULL;
-                            break; 
+                            $startSaved = $endSaved = NULL;             
+                            continue;                                   // přechod k další uložené session
                         }
                     /*    else {
                             $startSaved = $endSaved = NULL;
@@ -189,7 +189,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
             }
         }
     }
-    /*if (!$sessionOverlay) {*/addEventPairToArr($startTested, $endTested, $type);//}     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+    /*if (!$sessionOverlay) {*/addEventPairToArr($startTested, $endTested, $type);//} // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
 // ==============================================================================================================================================================================================
 
