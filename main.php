@@ -171,7 +171,8 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
     }
     addEventPairToArr($startTested, $endTested, $type);     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
-function sesionDayParcelation ($startTime, $endTime, $type) {    
+function sesionDayParcelation ($startTime, $endTime, $type) { 
+    global $processedDate;                                  // proměnná se definuje uvnitř této fce, ale musí být přístupná v dalších fcích
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);        
     $processedDate = $startDate;
