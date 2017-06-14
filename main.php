@@ -190,7 +190,7 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
 $users = $events = $queueGroup = [];                        // inicializace polí
 
 // iterace queues -> sestavení pole párů fronta-skupina
-echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUES & GROUPS || " : "";          // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUES & GROUPS... " : "";  // volitelný diagnostický výstup do logu
 
 foreach ($queues as $qNum => $q) {                          // iterace řádků tabulky front
     if ($qNum == 0) {continue;}                             // vynechání hlavičky tabulky
@@ -212,7 +212,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
 }
-echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠĚ SESTAVENO || " : "";   // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠĚ SESTAVENO... " : "";   // volitelný diagnostický výstup do logu
 if ($diagOutOptions["queueGroupDump"]) {                    // volitelný diagnostický výstup do logu
     echo "\$queueGroup = ";
     print_r($queueGroup);
@@ -221,7 +221,7 @@ if ($diagOutOptions["queueGroupDump"]) {                    // volitelný diagno
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace queueSessions
 
-echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUESESSIONS || " : "";    // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUESESSIONS... " : "";    // volitelný diagnostický výstup do logu
 
 foreach ($queueSessions as $qsNum => $qs) {
     if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
@@ -235,7 +235,7 @@ foreach ($queueSessions as $qsNum => $qs) {
     $idgroup   = findInArray($idqueue, $queueGroup);
 
     if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
-        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v QUEUESESSIONS | "; }
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v QUEUESESSIONS... "; }
         if ($diagOutOptions["invalidRowsDump"]) {echo "\$qs = "; print_r($qs); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
@@ -244,7 +244,7 @@ foreach ($queueSessions as $qsNum => $qs) {
 
     sesionDayParcelation ($startTime, $endTime, "Q");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS || ZAHÁJENA ITERACE PAUSESESSIONS || " : "";     // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";     // volitelný diagnostický výstup do logu
 // ==============================================================================================================================================================================================
 // iterace pauseSessions + activities + records
 // iterace pauseSessions  (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
@@ -269,7 +269,7 @@ foreach ($pauseSessions as $psNum => $ps) {
     
     sesionDayParcelation ($startTime, $endTime, "P");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS || ZAHÁJENA ITERACE AKTIVIT || " : "";   // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... ZAHÁJENA ITERACE AKTIVIT... " : "";   // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace activities
 
@@ -299,7 +299,7 @@ foreach ($activities as $aNum => $a) {
     // aktivita je ze zkoumaného časového rozsahu -> cyklus generující aktivity pro všechny dny, po které trvala reálná aktivita
     sesionDayParcelation ($time, $timeClose, "A");   
 } 
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE AKTIVIT || ZAHÁJENA ITERACE RECORDS || " : ""; // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE AKTIVIT... ZAHÁJENA ITERACE RECORDS... " : "";     // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace records
 
@@ -333,7 +333,7 @@ foreach ($records as $rNum => $r) {
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // odmítnuto
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE RECORDS || " : "";                     // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE RECORDS... " : "";                     // volitelný diagnostický výstup do logu
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
