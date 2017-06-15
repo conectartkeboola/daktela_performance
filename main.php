@@ -154,6 +154,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
             // případ 3 - testovaná session zleva zasahuje do porovnávané uložené session
             if ($startTested < $startSaved && $endTested > $startSaved && $endTested <= $endSaved) {
                 $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                unset($evnts);
                 sessionTestedVsSaved($startTested, $startSaved, $type, $evts);          // rekurzivní test zbylého podintervalu
                 $startSaved = $endSaved = NULL;
                 return; 
@@ -161,6 +162,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
             // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
             if ($startTested >= $startSaved && $startTested < $endSaved && $endTested > $endSaved) {
                 $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                unset($evnts);
                 sessionTestedVsSaved ($endSaved, $endTested, $type, $evts);             // rekurzivní test zbylého podintervalu
                 $startSaved = $endSaved = NULL; 
                 return; 
@@ -168,6 +170,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
             // případ 5 - testovaná session oboustranně přesahuje porovnávanou uloženou session
             if ($startTested < $startSaved && $endTested > $endSaved) {
                 $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                unset($evnts);
                 sessionTestedVsSaved ($startTested, $startSaved, $type, $evts);         // rekurzivní test zbylého podintervalu 1
                 sessionTestedVsSaved ($endSaved, $endTested, $type, $evts);             // rekurzivní test zbylého podintervalu 2
                 $startSaved = $endSaved = NULL; 
@@ -187,12 +190,12 @@ function sessionProcessing ($startTested, $endTested, $type) {
                 usort($evnts, function($a, $b) {                        // sort pole událostí daného dne, uživatele a skupiny podle času
                     return strcmp($a["time"], $b["time"]);
                 });
-              echo "$sessionProcessing - \$evnts: "; var_dump($evnts); echo " || ";
                 sessionTestedVsSaved ($startTested, $endTested, $type, $evnts);
+                return;
             }
         }
     }
-    addEventPairToArr($startTested, $endTested, $type);                 // testovaná session dosud není uložená -> uložím ji do pole $events
+    addEventPairToArr($startTested, $endTested, $type);     // daný den, uživatel a skupina nemá zatím žádnou uloženou událost -> uložím testovanou session do pole $events
 }
 function sesionDayParcelation ($startTime, $endTime, $type) { 
     global $processedDate;                                  // proměnná se definuje uvnitř této fce, ale musí být přístupná v dalších fcích
@@ -462,7 +465,7 @@ if ($diagOutOptions["eventsOutTable"]) {
         foreach ($daysByUserGroup as $iduser => $daysByGroup) {
             foreach ($daysByGroup as $idgroup => $evnts) {            
                 foreach ($evnts as $evnt) {
-                    if (!array_filter($evnt)) {continue;}               // vyřazení případných záznamů obsahujících jen prázdné hodnoty
+                    if (!array_filter($evnt)) {continue;}           // vyřazení případných záznamů obsahujících jen prázdné hodnoty
                     $colVals = [$iduser, $idgroup];
                     foreach ($evnt as $evntVal) { 
                         $colVals[] = $evntVal;
