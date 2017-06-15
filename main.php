@@ -130,9 +130,15 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
             if (array_key_exists($idgroup, $events[$processedDate][$iduser])) {                
-                foreach ($events[$processedDate][$iduser][$idgroup] as $event) {
-                    if ($event["type"]==$type && $event["method"]=="+") {$startSaved = $event["time"];}
-                    if ($event["type"]==$type && $event["method"]=="-" && !is_null($startSaved)) {$endSaved = $event["time"];}
+                $evnts = $events[$processedDate][$iduser][$idgroup];    // pole událstí daného dne, uživatele a skupiny
+                    
+                usort($evnts, function($a, $b) {                        // sort pole událostí daného dne, uživatele a skupiny podle času
+                    return strcmp($a["time"], $b["time"]);
+                });
+
+                foreach ($evnts as $evnt) {
+                    if ($evnt["type"]==$type && $evnt["method"]=="+") {$startSaved = $evnt["time"];}
+                    if ($evnt["type"]==$type && $evnt["method"]=="-" && !is_null($startSaved)) {$endSaved = $evnt["time"];}
                     if (!is_null($startSaved) && !is_null($endSaved)) {                            
                         // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
                         if (($startTested <  $startSaved && $endTested <= $startSaved) ||
@@ -164,7 +170,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {         // čas 
                             $startSaved = $endSaved = NULL; 
                             return; 
                         } 
-                    }                     
+                    }
                 }
             }
         }
