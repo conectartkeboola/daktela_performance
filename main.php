@@ -137,7 +137,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
                                                                         // ... + pole událostí daného dne, uživatele a skupiny
     $startSaved = $endSaved = NULL;                                     // čas začátku a konce porovnávané uložené session
     foreach ($evnts as $evnt) {
-        if ($evnt["type"]==$type && $evnt["method"]=="+" &&  is_null($startSaved)) {$startSaved = $evnt["time"];}
+        if ($evnt["type"]==$type && $evnt["method"]=="+")                          {$startSaved = $evnt["time"];}
         if ($evnt["type"]==$type && $evnt["method"]=="-" && !is_null($startSaved)) {$endSaved   = $evnt["time"];}
         if (!is_null($startSaved) && !is_null($endSaved)) {                            
             // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
@@ -238,7 +238,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
 }
-echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠĚ SESTAVENO... " : "";   // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠNĚ SESTAVENO... " : "";  // volitelný diagnostický výstup do logu
 if ($diagOutOptions["queueGroupDump"]) {                    // volitelný diagnostický výstup do logu
     echo "\$queueGroup = ";
     print_r($queueGroup);
@@ -373,7 +373,7 @@ foreach ($users as $date => $daysByUserGroup) {
     }
 }*/
 // ==============================================================================================================================================================================================
-// events magic
+// events magic (analýza přechodů mezi stavy)
 
 foreach ($events as $date => $daysByUserGroup) {
    foreach ($daysByUserGroup as $iduser => $daysByGroup) { 
@@ -458,7 +458,6 @@ foreach ($users as $date => $daysByUserGroup) {
         }
     }    
 }
-
 // zápis událostí (volitelný diagnostický výstup)
 if ($diagOutOptions["eventsOutTable"]) {
     foreach ($events as $date => $daysByUserGroup) {
