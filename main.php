@@ -170,10 +170,11 @@ function sessionProcessing ($startTested, $endTested, $type) {
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
             if (array_key_exists($idgroup, $events[$processedDate][$iduser])) {                
-                $evnts = $events[$processedDate][$iduser][$idgroup];    // pole událstí daného dne, uživatele a skupiny                 
+                $evnts = $events[$processedDate][$iduser][$idgroup];    // pole událstí daného dne, uživatele a skupiny              
                 usort($evnts, function($a, $b) {                        // sort pole událostí daného dne, uživatele a skupiny podle času
                     return strcmp($a["time"], $b["time"]);
                 });
+              echo "$sessionProcessing - \$evnts: "; var_dump($evnts); echo " || ";
                 sessionTestedVsSaved ($startTested, $endTested, $type, $evnts);
             }
         }
