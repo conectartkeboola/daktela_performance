@@ -124,12 +124,21 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     $events[$processedDate][$iduser][$idgroup][] = $event1; 
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
+function comparedSessionPutAside ($evts, $startSaved, $endSaved, $type) {
+    foreach ($evts as $i => $evt) {
+        if (($evt["type"]==$type && $evt["time"]==$startSaved && $evt["method"] == "+") ||
+            ($evt["type"]==$type && $evt["time"]==$endSaved   && $evt["method"] == "-"))  {
+            unset($evts[$i]);  // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+        }    
+    }
+    return  $evts;
+}
 function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas začátku a konce testované session + typ testované session + ...
                                                                         // ... + pole událostí daného dne, uživatele a skupiny
     $startSaved = $endSaved = NULL;                                     // čas začátku a konce porovnávané uložené session
     foreach ($evnts as $evnt) {
-        if ($evnt["type"]==$type && $evnt["method"]=="+") {$startSaved = $evnt["time"];}
-        if ($evnt["type"]==$type && $evnt["method"]=="-" && !is_null($startSaved)) {$endSaved = $evnt["time"];}
+        if ($evnt["type"]==$type && $evnt["method"]=="+" &&  is_null($startSaved)) {$startSaved = $evnt["time"];}
+        if ($evnt["type"]==$type && $evnt["method"]=="-" && !is_null($startSaved)) {$endSaved   = $evnt["time"];}
         if (!is_null($startSaved) && !is_null($endSaved)) {                            
             // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
             if (($startTested <  $startSaved && $endTested <= $startSaved) ||
@@ -144,20 +153,23 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
             }
             // případ 3 - testovaná session zleva zasahuje do porovnávané uložené session
             if ($startTested < $startSaved && $endTested > $startSaved && $endTested <= $endSaved) {
-                sessionTestedVsSaved ($startTested, $startSaved, $type);  // rekurzivní test zbylého podintervalu
+                $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                sessionTestedVsSaved($startTested, $startSaved, $type, $evts);          // rekurzivní test zbylého podintervalu
                 $startSaved = $endSaved = NULL;
                 return; 
             }
             // případ 4 - testovaná session zprava zasahuje do porovnávané uložené session
             if ($startTested >= $startSaved && $startTested < $endSaved && $endTested > $endSaved) {
-                sessionTestedVsSaved ($endSaved, $endTested, $type);      // rekurzivní test zbylého podintervalu
+                $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                sessionTestedVsSaved ($endSaved, $endTested, $type, $evts);             // rekurzivní test zbylého podintervalu
                 $startSaved = $endSaved = NULL; 
                 return; 
             }
             // případ 5 - testovaná session oboustranně přesahuje porovnávanou uloženou session
             if ($startTested < $startSaved && $endTested > $endSaved) {
-                sessionTestedVsSaved ($startTested, $startSaved, $type);  // rekurzivní test zbylého podintervalu 1
-                sessionTestedVsSaved ($endSaved, $endTested, $type);      // rekurzivní test zbylého podintervalu 2
+                $evts = comparedSessionPutAside($evnts, $startSaved, $endSaved, $type); // prvek pole $evnts právě porovnaný s testovanou session už s ní nebudeme znovu porovnávat
+                sessionTestedVsSaved ($startTested, $startSaved, $type, $evts);         // rekurzivní test zbylého podintervalu 1
+                sessionTestedVsSaved ($endSaved, $endTested, $type, $evts);             // rekurzivní test zbylého podintervalu 2
                 $startSaved = $endSaved = NULL; 
                 return; 
             } 
@@ -167,6 +179,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
 }
 function sessionProcessing ($startTested, $endTested, $type) {
     global $processedDate, $iduser, $idgroup, $events;
+    $evnts = [];
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
             if (array_key_exists($idgroup, $events[$processedDate][$iduser])) {                
