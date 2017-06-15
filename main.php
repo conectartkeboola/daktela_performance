@@ -165,7 +165,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {// čas 
     }
     addEventPairToArr($startTested, $endTested, $type); // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
-function sessionsProcessing ($startTested, $endTested, $type) {
+function sessionProcessing ($startTested, $endTested, $type) {
     global $processedDate, $iduser, $idgroup, $events;
     if (array_key_exists($processedDate, $events)) {
         if (array_key_exists($iduser, $events[$processedDate])) {
@@ -178,6 +178,7 @@ function sessionsProcessing ($startTested, $endTested, $type) {
             }
         }
     }
+    addEventPairToArr($startTested, $endTested, $type);                 // testovaná session dosud není uložená -> uložím ji do pole $events
 }
 function sesionDayParcelation ($startTime, $endTime, $type) { 
     global $processedDate;                                  // proměnná se definuje uvnitř této fce, ale musí být přístupná v dalších fcích
@@ -188,7 +189,7 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
         $dayStartTime = max($startTime,           $processedDate .' 00:00:00'); 
         $dayEndTime   = min($endTime,  dateIncrem($processedDate).' 00:00:00');
         if ($dayStartTime < $dayEndTime) {                  // eliminace nevalidních případů
-            sessionsProcessing($dayStartTime, $dayEndTime, $type);
+            sessionProcessing($dayStartTime, $dayEndTime, $type);
         }
         $processedDate = dateIncrem($processedDate);        // inkrement data o 1 den        
     }
