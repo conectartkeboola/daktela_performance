@@ -21,8 +21,8 @@ $tabsIn = ["groups", "queues", "queueSessions", "loginSessions", "pauseSessions"
 
 $tabsOut = [                                                                                                    // výstupní tabulky
     "users"     =>  ["date", "iduser", "idgroup", "L", "Q", "A", "P", "LQ", "LA", "LP", "QA", "QP", "AP", "LQA", "LQP", "LAP", "QAP", "LQAP",
-                     "loginSession", "queueSession", "pauseSession", "talkTime", "idleTime", "activityTime", "callCount", "callCountAnswered", /*"transactionCount",*/
-                     "recordsTouched", "recordsDropped", "recordsTimeout", "recordsBusy", "recordsDenied"],
+                     "loginSession", "queueSession", "pauseSession", "activityTime", "talkTime", "idleTime", "callCount", "callCountAnswered",
+                     /*"transactionCount",*/ "recordsTouched", "recordsDropped", "recordsTimeout", "recordsBusy", "recordsDenied"],
     "events"    =>  ["iduser", "idgroup", "time", "type", "method"]
 ];         
 $tabsOutList = array_keys($tabsOut);
