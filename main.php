@@ -480,7 +480,7 @@ foreach ($events as $date => $daysByUserGroup) {
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $counters) {
-            $users[$date][$iduser][$idgroup]["idleTime"] = $counters["LQ"];
+            $users[$date][$iduser][$idgroup]["idleTime"] = $counters["Q"] + $counters["LQ"];    // jedna z hodnot bývá vždy nulová -> "idleTime" je jejich sloučením do jednoho sloupce
         }
     }
 }
