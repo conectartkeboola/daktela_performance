@@ -17,11 +17,11 @@ $diagOutOptions       = $config['parameters']['diagOutOptions'];        // diag.
                                                                         //                                 ... "eventsDump", "invalidRowsInfo", "invalidRowsDump", "eventsOutTable"
 // ==============================================================================================================================================================================================
 
-$tabsIn = ["groups", "queues", "queueSessions", "pauseSessions", "activities", "records"];    // vstupní tabulky
+$tabsIn = ["groups", "queues", "queueSessions", "loginSessions", "pauseSessions", "activities", "records"];     // vstupní tabulky
 
-$tabsOut = [                                                                        // výstupní tabulky
-    "users"     =>  ["date", "iduser", "idgroup", "Q", "QA", "QAP", "QP", "P", "AP", "queueSession", "pauseSession",
-                     "talkTime", "idleTime", "activityTime", "callCount", "callCountAnswered", /*"transactionCount",*/
+$tabsOut = [                                                                                                    // výstupní tabulky
+    "users"     =>  ["date", "iduser", "idgroup", "L", "Q", "A", "P", "LQ", "LA", "LP", "QA", "QP", "AP", "LQA", "LQP", "LAP", "QAP", "LQAP",
+                     "loginSession", "queueSession", "pauseSession", "talkTime", "idleTime", "activityTime", "callCount", "callCountAnswered", /*"transactionCount",*/
                      "recordsTouched", "recordsDropped", "recordsTimeout", "recordsBusy", "recordsDenied"],
     "events"    =>  ["iduser", "idgroup", "time", "type", "method"]
 ];         
@@ -67,17 +67,27 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     if (!array_key_exists($date,    $users))                 {$users[$date]                    = []; }
     if (!array_key_exists($iduser,  $users[$date]))          {$users[$date][$iduser]           = []; }
     if (!array_key_exists($idgroup, $users[$date][$iduser])) {$users[$date][$iduser][$idgroup] =
-        [   "Q"                 => NULL,                    // sestavení záznamu do pole uživatelů
-            "QA"                => NULL,
-            "QAP"               => NULL,
-            "QP"                => NULL,
+        [   "L"                 => NULL,                    // sestavení záznamu do pole uživatelů
+            "Q"                 => NULL,
+            "A"                 => NULL,
             "P"                 => NULL,
+            "LQ"                => NULL,
+            "LA"                => NULL,
+            "LP"                => NULL,
+            "QA"                => NULL,            
+            "QP"                => NULL,
             "AP"                => NULL,
+            "LQA"               => NULL,
+            "LQP"               => NULL,
+            "LAP"               => NULL,
+            "QAP"               => NULL,
+            "LQAP"              => NULL,
+            "loginSession"      => NULL,
             "queueSession"      => NULL,
             "pauseSession"      => NULL,
-            "talkTime"          => NULL,
-            "idleTime"          => NULL,                            
             "activityTime"      => NULL,
+            "talkTime"          => NULL,
+            "idleTime"          => NULL,              
             "callCount"         => NULL,
             "callCountAnswered" => NULL,
             //"transactionCount"  => 0,
@@ -97,6 +107,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson, $diagOutOptions;
     initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {
+        case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
@@ -272,7 +283,31 @@ foreach ($queueSessions as $qsNum => $qs) {
 }
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";     // volitelný diagnostický výstup do logu
 // ==============================================================================================================================================================================================
-// iterace pauseSessions + activities + records
+// iterace loginSessions + pauseSessions + activities + records
+// iterace loginSessions  (loginSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
+
+foreach ($loginSessions as $lsNum => $ls) {
+    if ($lsNum == 0) {continue;}                        // vynechání hlavičky tabulky
+    $idinstance = substr($ls[0], 0 ,1);                 // $ls[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+
+    $startTime = $ls[1];
+    $endTime   = !empty($ls[2]) ? $ls[2] : date('Y-m-d H:i:s');
+    $iduser    = $ls[4];
+    $idgroup   = "";                                    // loginSessions nejsou vázané na skupinu -> je použita prázdná skupina
+    
+    if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+        if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v LOGINSESSIONS | "; }
+        if ($diagOutOptions["invalidRowsDump"]) {echo "\$ls = "; print_r($ls); }
+        if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
+        continue;        
+    }
+    if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu 
+    
+    sesionDayParcelation ($startTime, $endTime, "L");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
+}
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE LOGINSESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";   // volitelný diagnostický výstup do logu
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace pauseSessions  (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
 
 foreach ($pauseSessions as $psNum => $ps) {
@@ -382,31 +417,49 @@ foreach ($events as $date => $daysByUserGroup) {
             usort($evnts, function($a, $b) {
                 return strcmp($a["time"], $b["time"]);
             });
-            
+
             $times = [                                          // časy pro uspořádanou trojici [datum; skupina; uživatel]
+                "L"         => NULL,
                 "Q"         => NULL,
-                "QA"        => NULL,
-                "QAP"       => NULL,
-                "QP"        => NULL,
+                "A"         => NULL,
                 "P"         => NULL,
-                "AP"        => NULL
+                "LQ"        => NULL,
+                "LA"        => NULL,
+                "LP"        => NULL,
+                "QA"        => NULL,
+                "QP"        => NULL,
+                "AP"        => NULL,
+                "LQA"       => NULL, 
+                "LQP"       => NULL, 
+                "LAP"       => NULL, 
+                "QAP"       => NULL,
+                "LQAP"      => NULL                
             ];
             $lastTime = 0;
-            $status = [
-                "Q" => false,
-                "A" => false,
-                "P" => false
+            $status = [ "L" => false,                           // stavové proměnné
+                        "Q" => false,
+                        "A" => false,
+                        "P" => false
             ];
             foreach ($evnts as $evnt) {
                 $currentTime = strtotime($evnt["time"]);
                 if ($lastTime > 0) {
-                    switch ([$status["Q"], $status["A"], $status["P"]]) {                    
-                        case [true , true , true ]:     $times["QAP"] += $currentTime - $lastTime;  break;
-                        case [true , true , false]:     $times["QA" ] += $currentTime - $lastTime;  break;
-                        case [true , false, false]:     $times["Q"  ] += $currentTime - $lastTime;  break;
-                        case [true , false, true ]:     $times["QP" ] += $currentTime - $lastTime;  break;
-                        case [false, false, true ]:     $times["P"  ] += $currentTime - $lastTime;  break;
-                        case [false, true , true ]:     $times["AP" ] += $currentTime - $lastTime;
+                    switch ([$status["L"], $status["Q"], $status["A"], $status["P"]]) {
+                        case [false, false, false, true ]:  $times["P"   ] += $currentTime - $lastTime; break;
+                        case [false, false, true , false]:  $times["A"   ] += $currentTime - $lastTime; break;
+                        case [false, false, true , true ]:  $times["AP"  ] += $currentTime - $lastTime; break;
+                        case [false, true , false, false]:  $times["Q"   ] += $currentTime - $lastTime; break;
+                        case [false, true , false, true ]:  $times["QP"  ] += $currentTime - $lastTime; break;
+                        case [false, true , true , false]:  $times["QA"  ] += $currentTime - $lastTime; break;
+                        case [false, true , true , true ]:  $times["QAP" ] += $currentTime - $lastTime; break;
+                        case [true , false, false, false]:  $times["L"   ] += $currentTime - $lastTime; break;
+                        case [true , false, false, true ]:  $times["LP"  ] += $currentTime - $lastTime; break;
+                        case [true , false, true , false]:  $times["LA"  ] += $currentTime - $lastTime; break;
+                        case [true , false, true , true ]:  $times["LAP" ] += $currentTime - $lastTime; break;
+                        case [true , true , false, false]:  $times["LQ"  ] += $currentTime - $lastTime; break;
+                        case [true , true , false, true ]:  $times["LQP" ] += $currentTime - $lastTime; break;
+                        case [true , true , true , false]:  $times["LQA" ] += $currentTime - $lastTime; break;
+                        case [true , true , true , true ]:  $times["LQAP"] += $currentTime - $lastTime;
                         }
                     }
                 switch ($evnt["method"]) {
@@ -427,7 +480,7 @@ foreach ($events as $date => $daysByUserGroup) {
 foreach ($users as $date => $daysByUserGroup) {
     foreach ($daysByUserGroup as $iduser => $daysByGroup) {
         foreach ($daysByGroup as $idgroup => $counters) {
-            $users[$date][$iduser][$idgroup]["idleTime"] = $counters["Q"];
+            $users[$date][$iduser][$idgroup]["idleTime"] = $counters["LQ"];
         }
     }
 }
