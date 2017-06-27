@@ -347,8 +347,8 @@ foreach ($q_p as $date => $daysByUserGroup) {
                 switch ($qp["type"]) {
                     case "Q":   $idgr = $idgroup;   break;
                     case "P":   if (!is_null($idgr)) {
-                        $users[$processedDate][$iduser][$idgr] = $users[$processedDate][$iduser][$idgroup];     // zavedeme pauseSession s dohledaným idgroup
-                        unset ($users[$processedDate][$iduser][$idgroup]);                                      // zrušíme pauseSession s prázdným idgroup
+                        $users[$date][$iduser][$idgr] = $users[$processedDate][$iduser][$idgroup];              // zavedeme pauseSession s dohledaným idgroup
+                        unset ($users[$date][$iduser][$idgroup]);                                               // zrušíme pauseSession s prázdným idgroup
                         $idgr = NULL;
                     }            
                 }                    
