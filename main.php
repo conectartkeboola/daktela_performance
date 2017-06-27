@@ -109,9 +109,9 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     switch ($type) {
         case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);       break;                    
         case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);
-                    $q_p  [$processedDate][$iduser][$idgroup] = ["startTime" => $startTime, "type" => "Q"];                         break;
+                    $q_p  [$processedDate][$iduser][] = ["startTime" => $startTime, "type" => "Q", "idgroup" => $idgroup];          break;
         case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);
-                    $q_p  [$processedDate][$iduser][$idgroup] = ["startTime" => $startTime, "type" => "P"];                         break;
+                    $q_p  [$processedDate][$iduser][] = ["startTime" => $startTime, "type" => "P"];                                 break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
@@ -337,22 +337,20 @@ echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... Z
 // iterace sjednocení queueSessions + pauseSessions  (kvůli přiřazen pauz ke skupinám)
 
 foreach ($q_p as $date => $daysByUserGroup) {
-    foreach ($daysByUserGroup as $iduser => $daysByGroup) {
-        foreach ($daysByGroup as $idgroup => $qps) {
-            usort($qps, function($a, $b) {
-                return strcmp($a["startTime"], $b["startTime"]);
-            });
-            $idgr = NULL;                           // ID skupiny
-            foreach ($qps as $qp) {
-                switch ($qp["type"]) {
-                    case "Q":   $idgr = $idgroup;   break;
-                    case "P":   if (!is_null($idgr)) {
-                        $users[$date][$iduser][$idgr] = $users[$processedDate][$iduser][$idgroup];              // zavedeme pauseSession s dohledaným idgroup
-                        unset ($users[$date][$iduser][$idgroup]);                                               // zrušíme pauseSession s prázdným idgroup
-                        $idgr = NULL;
-                    }            
-                }                    
-            }
+    foreach ($daysByUserGroup as $iduser => $qps) {
+        usort($qps, function($a, $b) {
+            return strcmp($a["startTime"], $b["startTime"]);
+        });
+        $idgr = NULL;                           // ID skupiny
+        foreach ($qps as $qp) {
+            switch ($qp["type"]) {
+                case "Q":   $idgr = $qp["idgroup"]; break;
+                case "P":   if (!is_null($idgr)) {
+                    $users[$date][$iduser][$idgr] = $users[$processedDate][$iduser][$idgroup];              // zavedeme pauseSession s dohledaným idgroup
+                    unset ($users[$date][$iduser][$idgroup]);                                               // zrušíme pauseSession s prázdným idgroup
+                    $idgr = NULL;
+                }            
+            }                    
         }
     }
 }
