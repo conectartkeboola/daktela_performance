@@ -128,7 +128,7 @@ function QP_processing () {
     }
 }
 function addEventPairToArr ($startTime, $endTime, $type) {              // zápis páru událostí (začátek - konec) do pole událostí
-    global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson, $diagOutOptions;
+    global $processedDate, $iduser, $idgroup, $users, $events, $QP, $typeAct, $itemJson, $diagOutOptions;
     //initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {        
         case "Q":   //$users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    
