@@ -61,9 +61,8 @@ function dateIncrem ($datum, $days = 1) {                   // inkrement data o 
 function findInArray ($key, $arr) {
     return array_key_exists($key, $arr) ? $arr[$key] : "";
 } 
-function initUsersAndEventsItems ($date, $iduser, $idgroup) {
-    global $users, $events;    
-    // inicializace záznamů do pole uživatelů
+function initUsersItems ($date, $iduser, $idgroup) {        // inicializace záznamů do pole uživatelů
+    global $users;    
     if (!array_key_exists($date,    $users))                 {$users[$date]                    = []; }
     if (!array_key_exists($iduser,  $users[$date]))          {$users[$date][$iduser]           = []; }
     if (!array_key_exists($idgroup, $users[$date][$iduser])) {$users[$date][$iduser][$idgroup] =
@@ -98,7 +97,9 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
             "recordsDenied"     => NULL
         ];
     }   
-    // inicializace záznamů do pole událostí
+}
+function initEventsItems ($date, $iduser, $idgroup) {                   // inicializace záznamů do pole událostí
+    global $events;  
     if (!array_key_exists($date,    $events))                 {$events[$date]                   = []; }
     if (!array_key_exists($iduser,  $events[$date]))          {$events[$date][$iduser]          = []; }
     if (!array_key_exists($idgroup, $events[$date][$iduser])) {$events[$date][$iduser][$idgroup]= []; }
@@ -109,16 +110,16 @@ function QP_processing () {
         foreach ($daysByUserGroup as $iduser => $qps) {    
             usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
                 return strcmp($a["startTime"], $b["startTime"]);
-            });            
+            });
             $idgroup = NULL;
             foreach ($qps as $qp) {
                 switch ($qp["type"]) {
                     case "Q":   $idgroup = $qp["idgroup"];
-                                initUsersAndEventsItems ($date, $iduser, $idgroup);
+                                initUsersItems ($date, $iduser, $idgroup);
                                 $users[$date][$iduser][$idgroup]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
                     case "P":   if (is_null($idgroup)) {break;}
-                                initUsersAndEventsItems ($date, $iduser, $idgroup);
+                                initUsersItems ($date, $iduser, $idgroup);
                                 $users[$date][$iduser][$idgroup]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 $idgroup = NULL;
                 }                    
@@ -131,11 +132,11 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     //initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {        
         case "Q":   //$users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    
-                    $QP[$processedDate][$iduser][] = ["type"=> "Q", "startTime"=> $startTime, "endTime"=> $endTime, "idgroup=> $idgroup"];  break;
+                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "Q", "idgroup=> $idgroup"];  break;
         case "P":   //$users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    
-                    $QP[$processedDate][$iduser][] = ["type"=> "P", "startTime"=> $startTime, "endTime"=> $endTime];                        break;
+                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "P"];                        break;
         
-        initUsersAndEventsItems ($processedDate, $iduser, $idgroup); 
+        initUsersItems ($processedDate, $iduser, $idgroup); 
         case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);               break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
@@ -151,14 +152,15 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
                         print_r($users[$processedDate][$iduser][$idgroup]);   
                         echo " || ";
                     }
-    }
+    }     
     $event1 = [ "time" => $startTime, "type" => $type, "method" => "+"];                                              
     $event2 = [ "time" => $endTime,   "type" => $type, "method" => "-"];    
     if ($diagOutOptions["eventsDump"]) {                                // volitelný diagnostický výstup do logu
         echo "\$startTime = ".$startTime." | \$endTime = ".$endTime." | \$type = ".$type." || ";
         print_r($event1); echo " || ";
         print_r($event2); echo " || ";
-    }    
+    }
+    initEventsItems ($processedDate, $iduser, $idgroup);
     $events[$processedDate][$iduser][$idgroup][] = $event1; 
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
@@ -362,7 +364,7 @@ echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... Z
 // zpracování pole $QP (queueSessions + pauseSessions)
 
 QP_processing ();
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČEN QP PEOCESSING... ZAHÁJENA ITERACE AKTIVIT... " : "";            // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČEN QP PROCESSING... ZAHÁJENA ITERACE AKTIVIT... " : "";            // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace activities
 
