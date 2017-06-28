@@ -36,7 +36,7 @@ $reportIntervDates    = [   "start" =>  date('Y-m-d',(strtotime(-$reportIntervHi
 $reportIntervTimes    = [   "start" =>  $reportIntervDates["start"].' 00:00:00', 
                             "end"   =>  $reportIntervDates["end"]  .' 23:59:59'
                         ];
-                                echo '$reportIntervTimes = ['.$reportIntervTimes["start"].', '.$reportIntervTimes["start"].']';
+                                echo '$reportIntervTimes = ['.$reportIntervTimes["start"].', '.$reportIntervTimes["end"].']';
 // ==============================================================================================================================================================================================
 // načtení vstupních souborů
 
@@ -283,7 +283,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
 }
-echo $diagOutOptions["basicStatusInfo"] ? "POLE \$queueGroup BYLO ÚSPĚŠNĚ SESTAVENO... " : "";  // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? 'POLE $queueGroup BYLO ÚSPĚŠNĚ SESTAVENO... ' : '';   // volitelný diagnostický výstup do logu
 if ($diagOutOptions["queueGroupDump"]) {                    // volitelný diagnostický výstup do logu
     echo "\$queueGroup = ";
     print_r($queueGroup);
@@ -314,6 +314,7 @@ foreach ($queueSessions as $qsNum => $qs) {
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu
 
     sesionDayParcelation ($startTime, $endTime, "Q");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
+            if (substr($startTime,0,10) == "2017-06-27" && $iduser == "300000145") {echo " | QS odeslaná k parcelaci = (".$startTime.", ".$endTime.", ".$type.")";}   
 }
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";     // volitelný diagnostický výstup do logu
 // ==============================================================================================================================================================================================
