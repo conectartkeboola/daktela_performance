@@ -134,12 +134,12 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
         case "Q":   //$users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    
                     $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "Q", "idgroup=> $idgroup"];  break;
         case "P":   //$users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    
-                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "P"];                        break;
-        
-        case true:  initUsersItems ($processedDate, $iduser, $idgroup); 
-        case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);               break;
+                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "P"];                        break; 
+        case "L":   initUsersItems ($processedDate, $iduser, $idgroup);
+                    $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);               break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
+                        initUsersItems ($processedDate, $iduser, $idgroup);
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
                         $users[$processedDate][$iduser][$idgroup]["talkTime"]     += $item-> duration;
                         $users[$processedDate][$iduser][$idgroup]["callCount"]    += 1;
