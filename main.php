@@ -111,16 +111,18 @@ function QP_processing () {
             usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
                 return strcmp($a["startTime"], $b["startTime"]);
             });
-            $idgroup = NULL;
+            $idgroup = $qsEndTime = NULL;
             foreach ($qps as $qp) {
                 switch ($qp["type"]) {
-                    case "Q":   $idgroup = $qp["idgroup"];
+                    case "Q":   $idgroup   = $qp["idgroup"];
+                                $qsEndTime = $qp["endTime"];
                                 initUsersItems ($date, $iduser, $idgroup);
                                 $users[$date][$iduser][$idgroup]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
                     case "P":   if (is_null($idgroup)) {break;}
+                                $idgr = $qp["endTime"] < $qsEndTime  ?  $idgroup : ""; 
                                 initUsersItems ($date, $iduser, $idgroup);
-                                $users[$date][$iduser][$idgroup]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                                $users[$date][$iduser][$idgr]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                 }                    
             }
         }
