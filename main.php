@@ -103,13 +103,40 @@ function initUsersAndEventsItems ($date, $iduser, $idgroup) {
     if (!array_key_exists($iduser,  $events[$date]))          {$events[$date][$iduser]          = []; }
     if (!array_key_exists($idgroup, $events[$date][$iduser])) {$events[$date][$iduser][$idgroup]= []; }
 }
+function QP_processing () {   
+    global $QP, $users;
+    foreach ($QP as $date => $daysByUserGroup) {
+        foreach ($daysByUserGroup as $iduser => $qps) {    
+            usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
+                return strcmp($a["startTime"], $b["startTime"]);
+            });            
+            $idgroup = NULL;
+            foreach ($qps as $qp) {
+                switch ($qp["type"]) {
+                    case "Q":   $idgroup = $qp["idgroup"];
+                                initUsersAndEventsItems ($date, $iduser, $idgroup);
+                                $users[$date][$iduser][$idgroup]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                                break;
+                    case "P":   if (is_null($idgroup)) {break;}
+                                initUsersAndEventsItems ($date, $iduser, $idgroup);
+                                $users[$date][$iduser][$idgroup]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                                $idgroup = NULL;
+                }                    
+            }
+        }
+    }
+}
 function addEventPairToArr ($startTime, $endTime, $type) {              // zápis páru událostí (začátek - konec) do pole událostí
     global $processedDate, $iduser, $idgroup, $users, $events, $typeAct, $itemJson, $diagOutOptions;
-    initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
-    switch ($type) {
-        case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "Q":   $users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    break;
-        case "P":   $users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    break;
+    //initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
+    switch ($type) {        
+        case "Q":   //$users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    
+                    $QP[$processedDate][$iduser][] = ["type"=> "Q", "startTime"=> $startTime, "endTime"=> $endTime, "idgroup=> $idgroup"];  break;
+        case "P":   //$users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    
+                    $QP[$processedDate][$iduser][] = ["type"=> "P", "startTime"=> $startTime, "endTime"=> $endTime];                        break;
+        
+        initUsersAndEventsItems ($processedDate, $iduser, $idgroup); 
+        case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);               break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
                         $users[$processedDate][$iduser][$idgroup]["activityTime"] += strtotime($endTime) - strtotime($startTime);
@@ -224,7 +251,7 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
 }
 // ==============================================================================================================================================================================================
 
-$users = $events = $queueGroup = [];                        // inicializace polí
+$users = $events = $queueGroup = $QP = [];                  // inicializace polí
 
 // iterace queues -> sestavení pole párů fronta-skupina
 echo $diagOutOptions["basicStatusInfo"] ? "ZAHÁJENA ITERACE QUEUES & GROUPS... " : "";  // volitelný diagnostický výstup do logu
@@ -330,7 +357,12 @@ foreach ($pauseSessions as $psNum => $ps) {
     
     sesionDayParcelation ($startTime, $endTime, "P");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... ZAHÁJENA ITERACE AKTIVIT... " : "";   // volitelný diagnostický výstup do logu
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... ZAHÁJEN QP PROCESSING... " : "";      // volitelný diagnostický výstup do logu
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
+// zpracování pole $QP (queueSessions + pauseSessions)
+
+QP_processing ();
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČEN QP PEOCESSING... ZAHÁJENA ITERACE AKTIVIT... " : "";            // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace activities
 
