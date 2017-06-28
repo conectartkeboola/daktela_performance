@@ -36,6 +36,7 @@ $reportIntervDates    = [   "start" =>  date('Y-m-d',(strtotime(-$reportIntervHi
 $reportIntervTimes    = [   "start" =>  $reportIntervDates["start"].' 00:00:00', 
                             "end"   =>  $reportIntervDates["end"]  .' 23:59:59'
                         ];
+                                echo '$reportIntervTimes = ['.$reportIntervTimes["start"].', '.$reportIntervTimes["start"].']';
 // ==============================================================================================================================================================================================
 // načtení vstupních souborů
 
