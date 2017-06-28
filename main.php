@@ -245,7 +245,7 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
     global $processedDate;                                  // proměnná se definuje uvnitř této fce, ale musí být přístupná v dalších fcích
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);
-    $processedDate = $startDate;                    global $iduser; if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | neparcelovaná session = (".$startDate.", ".$endDate.", ".$type.") | ";}
+    $processedDate = $startDate;                    global $iduser; if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | neparcelovaná session = (".$startTime.", ".$endTime.", ".$type.") | ";}
     while ($processedDate <= $endDate) {          
         $dayStartTime = max($startTime,           $processedDate .' 00:00:00'); 
         $dayEndTime   = min($endTime,  dateIncrem($processedDate).' 00:00:00');
