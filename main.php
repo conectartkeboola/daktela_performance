@@ -120,7 +120,7 @@ function QP_processing () {
                                 $users[$date][$iduser][$idgroup]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
                     case "P":   if (is_null($idgroup)) {break;}
-                                $idgr = $qp["endTime"] < $qsEndTime  ?  $idgroup : ""; 
+                                $idgr = $qp["endTime"] <= $qsEndTime  ?  $idgroup : ""; 
                                 initUsersItems ($date, $iduser, $idgroup);
                                 $users[$date][$iduser][$idgr]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                 }                    
