@@ -238,7 +238,7 @@ function sessionProcessing ($startTested, $endTested, $type) {
         }
     }
                             if ($processedDate == "2017-06-27" && $iduser == "300000145") {
-                                echo " | session odeslaná na test: (".$startTested.", ".$endTested.", ".$type.") | ";
+                                echo " | session odeslaná na test: (".$startTested.", ".$endTested.", ".$type.", ".$idgroup.") | ";
                             }
     addEventPairToArr($startTested, $endTested, $type);     // daný den, uživatel a skupina nemá zatím žádnou uloženou událost -> uložím testovanou session do pole $events
 }
@@ -246,13 +246,13 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
     global $processedDate;                                  // proměnná se definuje uvnitř této fce, ale musí být přístupná v dalších fcích
     $startDate = substr($startTime, 0, 10);
     $endDate   = substr($endTime,   0, 10);
-    $processedDate = $startDate;                    global $iduser; if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | neparcelovaná session = (".$startTime.", ".$endTime.", ".$type.") | ";}
+    $processedDate = $startDate;                    global $iduser, $idqueue; if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | neparcelovaná session = (".$startTime.", ".$endTime.", ".$type.", ".$idqueue.") | ";}
     while ($processedDate <= $endDate) {          
         $dayStartTime = max($startTime,           $processedDate .' 00:00:00'); 
         $dayEndTime   = min($endTime,  dateIncrem($processedDate).' 00:00:00');
         if ($dayStartTime < $dayEndTime) {                  // eliminace nevalidních případů
             sessionProcessing($dayStartTime, $dayEndTime, $type);
-        }                                           if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | parcelovaná session = (".$dayStartTime.", ".$dayEndTime.", ".$type.") | ";}
+        }                                           if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | parcelovaná session = (".$dayStartTime.", ".$dayEndTime.", ".$type.", ".$idqueue.") | ";}
         $processedDate = dateIncrem($processedDate);        // inkrement data o 1 den        
     }
 }
@@ -314,7 +314,7 @@ foreach ($queueSessions as $qsNum => $qs) {
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu
 
     sesionDayParcelation ($startTime, $endTime, "Q");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
-            if (substr($startTime,0,10) == "2017-06-27" && $iduser == "300000145") {echo " | QS odeslaná k parcelaci = (".$startTime.", ".$endTime.", ".$type.")";}   
+            if (substr($startTime,0,10) == "2017-06-27" && $iduser == "300000145") {echo " | QS odeslaná k parcelaci = (".$startTime.", ".$endTime.", ".$type.", ".$idqueue.")";}   
 }
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";     // volitelný diagnostický výstup do logu
 // ==============================================================================================================================================================================================
