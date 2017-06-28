@@ -121,7 +121,6 @@ function QP_processing () {
                     case "P":   if (is_null($idgroup)) {break;}
                                 initUsersItems ($date, $iduser, $idgroup);
                                 $users[$date][$iduser][$idgroup]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
-                                $idgroup = NULL;
                 }                    
             }
         }
@@ -132,7 +131,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     //initUsersAndEventsItems ($processedDate, $iduser, $idgroup);
     switch ($type) {        
         case "Q":   //$users[$processedDate][$iduser][$idgroup]["queueSession"] += strtotime($endTime) - strtotime($startTime);    
-                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "Q", "idgroup=> $idgroup"];  break;
+                    $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "Q", "idgroup"=> $idgroup];  break;
         case "P":   //$users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    
                     $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "P"];                        break; 
         case "L":   initUsersItems ($processedDate, $iduser, $idgroup);
