@@ -181,14 +181,6 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {        
         if ($evnt["type"]==$type && $evnt["method"]=="+")                          {$startSaved = $evnt["time"];}
         if ($evnt["type"]==$type && $evnt["method"]=="-" && !is_null($startSaved)) {$endSaved   = $evnt["time"];}
         if (!is_null($startSaved) && !is_null($endSaved)) {
-            
-                            echo '<br />sessionTestdVsSaved - \$evnts["2017-06-27"]["300000145"]: ';
-                            print_r($evnts["2017-06-27"]["300000145"]);
-                            echo "<br />\$startTested: ".$startTested;
-                            echo "<br />\$endTested: ".$endTested;
-                            echo "<br />\$startSaved: ".$startSaved;
-                            echo "<br />\$endSaved: ".$endSaved;
-            
             // případ 1 - testovaná session leží celá v dřívějším nebo pozdějším čase než porovnávaná uložená session
             if (($startTested <  $startSaved && $endTested <= $startSaved) ||
                 ($startTested >= $endSaved   && $endTested >  $endSaved) ) {
@@ -238,12 +230,15 @@ function sessionProcessing ($startTested, $endTested, $type) {
                 $evnts = $events[$processedDate][$iduser][$idgroup];    // pole událstí daného dne, uživatele a skupiny              
                 usort($evnts, function($a, $b) {                        // sort pole událostí daného dne, uživatele a skupiny podle času
                     return strcmp($a["time"], $b["time"]);
-                });                        if ($processedDate == "2017-06-27" && $iduser == "300000145") {echo "\$evnts: "; print_r($evnts);}
+                });
                 sessionTestedVsSaved ($startTested, $endTested, $type, $evnts);
                 return;
             }
         }
     }
+                            if ($processedDate == "2017-06-27" && $iduser == "300000145") {
+                                echo " | session odeslaná na test: (".$startTested.", ".$endTested.", ".$type.") | ";
+                            }
     addEventPairToArr($startTested, $endTested, $type);     // daný den, uživatel a skupina nemá zatím žádnou uloženou událost -> uložím testovanou session do pole $events
 }
 function sesionDayParcelation ($startTime, $endTime, $type) { 
@@ -371,7 +366,7 @@ foreach ($pauseSessions as $psNum => $ps) {
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... ZAHÁJEN QP PROCESSING... " : "";      // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // zpracování pole $QP (queueSessions + pauseSessions)
-
+                echo ' | stav před QP-processingem: \$users["2017-06-27"]["300000145"] = '; print_r($users["2017-06-27"]["300000145"]); echo " | ";
 QP_processing ();
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČEN QP PROCESSING... ZAHÁJENA ITERACE AKTIVIT... " : "";            // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
