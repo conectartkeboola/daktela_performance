@@ -110,7 +110,7 @@ function QP_processing () {
         foreach ($daysByUserGroup as $iduser => $qps) {    
             usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
                 return strcmp($a["startTime"], $b["startTime"]);
-            });
+            });    if ($date == "2017-06-27" && $iduser == "300000145") {var_dump($qps);}
             $idgroup = $qsEndTime = NULL;
             foreach ($qps as $qp) {
                 switch ($qp["type"]) {
