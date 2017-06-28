@@ -136,7 +136,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
         case "P":   //$users[$processedDate][$iduser][$idgroup]["pauseSession"] += strtotime($endTime) - strtotime($startTime);    
                     $QP[$processedDate][$iduser][] = ["startTime"=> $startTime, "endTime"=> $endTime, "type"=> "P"];                        break;
         
-        initUsersItems ($processedDate, $iduser, $idgroup); 
+        case true:  initUsersItems ($processedDate, $iduser, $idgroup); 
         case "L":   $users[$processedDate][$iduser][$idgroup]["loginSession"] += strtotime($endTime) - strtotime($startTime);               break;
         case "A":   if ($typeAct == 'CALL' && !empty($itemJson)) {
                         $item = json_decode($itemJson, false);          // dekódováno z JSONu na objekt
@@ -421,7 +421,7 @@ foreach ($records as $rNum => $r) {
     if ($editedDate < $reportIntervTimes["start"] || $editedDate > $reportIntervTimes["end"]) {continue;}   // záznam není ze zkoumaného časového rozsahu
 
     // záznam je ze zkoumaného časového rozsahu
-    initUsersAndEventsItems($editedDate, $iduser, $idgroup);
+    initUsersItems($editedDate, $iduser, $idgroup);
     if (!empty($idcall))         { $users[$editedDate][$iduser][$idgroup]["recordsTouched"] ++; }
     if ($idstatus == '00000021') { $users[$editedDate][$iduser][$idgroup]["recordsDropped"] ++; }   // zavěsil zákazník
     if ($idstatus == '00000122') { $users[$editedDate][$iduser][$idgroup]["recordsTimeout"] ++; }   // zavěsil systém
