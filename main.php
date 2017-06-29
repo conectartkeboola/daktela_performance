@@ -549,6 +549,7 @@ foreach ($events as $date => $daysByUserGroup) {
             $lastTime = $currentTime;
             }
             foreach ($times as $evnTyp => $evnTime) {
+                initUsersItems ($date, $iduser, $idgroup);
                 $users[$date][$iduser][$idgroup][$evnTyp] = !is_null($evnTime) ? $evnTime : NULL;
             }
         }
