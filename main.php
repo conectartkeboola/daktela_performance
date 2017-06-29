@@ -118,19 +118,19 @@ function QP_processing () {
                 switch ($qp["type"]) {
                     case "Q":   $qSess[] = ["endTime" => $qp["endTime"], "idgroup" => $qp["idgroup"]];
                                 initUsersItems ($date, $iduser, $qp["idgroup"]);
-                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek QS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";}
+                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek QS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) \n ";}
                                 $users[$date][$iduser][$qp["idgroup"]]["queueSession"] += $duration;
                                 break;
                     case "P":   if (empty($qSess)) {break;}
                                 foreach ($qSess as $qSe) {
-                                    if ($qp["startTime"] > $qSe["endTime"] || $qSe["idgroup"] == "") {continue;}                                    
+                                    if ($qp["startTime"] > $qSe["endTime"] || empty($qSe["idgroup"]) ) {continue;}                                    
                                     initUsersItems ($date, $iduser, $qSe["idgroup"]);
-                                        if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";}
+                                        if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) \n ";}
                                     $users[$date][$iduser][$qSe["idgroup"]]["pauseSession"] += $duration;
-                                    break;        
+                                    break 2;        
                                 }
                                 initUsersItems ($date, $iduser, "");
-                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", '', +".$duration." s) | ";}
+                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", '', +".$duration." s) \n ";}
                                 $users[$date][$iduser][""]["pauseSession"] += $duration;                                    
                 }                    
             }
