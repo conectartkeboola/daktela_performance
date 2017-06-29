@@ -177,6 +177,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
         print_r($event2); echo "\n";
     }
     initEventsItems ($processedDate, $iduser, $idgroup);
+    initUsersItems  ($processedDate, $iduser, $idgroup);                // potřebujeme kvůli pozdější "events magic", která ukládá výsledky do pole $users
     $events[$processedDate][$iduser][$idgroup][] = $event1; 
     $events[$processedDate][$iduser][$idgroup][] = $event2;
 }
@@ -549,7 +550,6 @@ foreach ($events as $date => $daysByUserGroup) {
             $lastTime = $currentTime;
             }
             foreach ($times as $evnTyp => $evnTime) {
-                initUsersItems ($date, $iduser, $idgroup);
                 $users[$date][$iduser][$idgroup][$evnTyp] = !is_null($evnTime) ? $evnTime : NULL;
             }
         }
