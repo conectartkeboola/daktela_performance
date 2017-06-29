@@ -112,18 +112,19 @@ function QP_processing () {
             usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
                 return strcmp($a["startTime"], $b["startTime"]);
             });                                     if ($date == "2017-06-27" && $iduser == "300000145") {echo "\$qps: "; print_r($qps);}
-            $idgroup = $qsEndTime = NULL;
+            $qSess = [];
             foreach ($qps as $qp) {
                 switch ($qp["type"]) {
-                    case "Q":   $idgroup   = $qp["idgroup"];
-                                $qsEndTime = $qp["endTime"];
-                                initUsersItems ($date, $iduser, $idgroup);
-                                $users[$date][$iduser][$idgroup]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                    case "Q":   $qSess[] = ["endTime" => $qp["endTime"], "idgroup" => $qp["idgroup"]];
+                                initUsersItems ($date, $iduser, $qp["idgroup"]);
+                                $users[$date][$iduser][$qp["idgroup"]]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
-                    case "P":   if (is_null($idgroup)) {break;}
-                                $idgr = $qp["endTime"] <= $qsEndTime  ?  $idgroup : ""; 
-                                initUsersItems ($date, $iduser, $idgroup);
-                                $users[$date][$iduser][$idgr]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                    case "P":   foreach ($qSess as $qSe) {
+                                    if ($qSe["endTime"] < $qp["startTime"] || $qSe["idgroup"] == "") {continue;}
+                                    initUsersItems ($date, $iduser, $qSe["idgroup"]);
+                                    $users[$date][$iduser][$qSe["idgroup"]]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
+                                    break;        
+                                }                                
                 }                    
             }
         }
@@ -150,7 +151,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
                         }
                     }
                     if ($diagOutOptions["usersActivitiesDump"]) {       // volitelný diagnostický výstup do logu
-                        echo " \$users[".$processedDate."][".$iduser."][".$idgroup."] = ";
+                        echo ' $users['.$processedDate.']['.$iduser.']['.$idgroup.'] = ';
                         print_r($users[$processedDate][$iduser][$idgroup]);   
                         echo " || ";
                     }
@@ -158,7 +159,7 @@ function addEventPairToArr ($startTime, $endTime, $type) {              // zápi
     $event1 = [ "time" => $startTime, "type" => $type, "method" => "+"];                                              
     $event2 = [ "time" => $endTime,   "type" => $type, "method" => "-"];    
     if ($diagOutOptions["eventsDump"]) {                                // volitelný diagnostický výstup do logu
-        echo "\$startTime = ".$startTime." | \$endTime = ".$endTime." | \$type = ".$type." || ";
+        echo ' $startTime = '.$startTime.' | $endTime = '.$endTime.' | $type = '.$type.' || ';
         print_r($event1); echo " || ";
         print_r($event2); echo " || ";
     }
@@ -307,7 +308,7 @@ foreach ($queueSessions as $qsNum => $qs) {
 
     if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v QUEUESESSIONS... "; }
-        if ($diagOutOptions["invalidRowsDump"]) {echo "\$qs = "; print_r($qs); }
+        if ($diagOutOptions["invalidRowsDump"]) {echo '$qs = '; print_r($qs); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
     }
@@ -333,7 +334,7 @@ foreach ($loginSessions as $lsNum => $ls) {
     
     if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v LOGINSESSIONS | "; }
-        if ($diagOutOptions["invalidRowsDump"]) {echo "\$ls = "; print_r($ls); }
+        if ($diagOutOptions["invalidRowsDump"]) {echo '$ls = '; print_r($ls); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
     }
@@ -357,7 +358,7 @@ foreach ($pauseSessions as $psNum => $ps) {
     
     if (empty($startTime) || empty($endTime) || empty($iduser)) {   // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v PAUSESESSIONS | "; }
-        if ($diagOutOptions["invalidRowsDump"]) {echo "\$ps = "; print_r($ps); }
+        if ($diagOutOptions["invalidRowsDump"]) {echo '$ps = '; print_r($ps); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
     }
@@ -368,7 +369,7 @@ foreach ($pauseSessions as $psNum => $ps) {
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE PAUSESESSIONS... ZAHÁJEN QP PROCESSING... " : "";      // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // zpracování pole $QP (queueSessions + pauseSessions)
-                echo ' | stav před QP-processingem: \$users["2017-06-27"]["300000145"] = '; print_r($users["2017-06-27"]["300000145"]); echo " | ";
+                echo ' | stav před QP-processingem: $users["2017-06-27"]["300000145"] = '; print_r($users["2017-06-27"]["300000145"]); echo " | ";
 QP_processing ();
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČEN QP PROCESSING... ZAHÁJENA ITERACE AKTIVIT... " : "";            // volitelný diagnostický výstup do logu
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
@@ -391,7 +392,7 @@ foreach ($activities as $aNum => $a) {
     
     if (empty($time) || empty($typeAct) || empty($iduser)) {    // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v ACTIVITIES | "; }
-        if ($diagOutOptions["invalidRowsDump"]) {echo "\$a = "; print_r($a); }
+        if ($diagOutOptions["invalidRowsDump"]) {echo '$a = '; print_r($a); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
     }
@@ -420,7 +421,7 @@ foreach ($records as $rNum => $r) {
     
     if (empty($edited) || empty($iduser)) {             // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v RECORDS | "; }
-        if ($diagOutOptions["invalidRowsDump"]) {echo "\$r = "; print_r($r); }
+        if ($diagOutOptions["invalidRowsDump"]) {echo '$r = '; print_r($r); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo " || "; }
         continue;        
     }
