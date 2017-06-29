@@ -117,16 +117,19 @@ function QP_processing () {
                 switch ($qp["type"]) {
                     case "Q":   $qSess[] = ["endTime" => $qp["endTime"], "idgroup" => $qp["idgroup"]];
                                 initUsersItems ($date, $iduser, $qp["idgroup"]);
+                                    echo " přírůstek QS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".strtotime($qp['endTime']) - strtotime($qp['startTime'])." s) | ";
                                 $users[$date][$iduser][$qp["idgroup"]]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
                     case "P":   if (empty($qSess)) {break;}
                                 foreach ($qSess as $qSe) {
                                     if ($qp["startTime"] > $qSe["endTime"] || $qSe["idgroup"] == "") {continue;}
                                     initUsersItems ($date, $iduser, $qSe["idgroup"]);
+                                        echo " přírůstek PS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".strtotime($qp['endTime']) - strtotime($qp['startTime'])." s) | ";
                                     $users[$date][$iduser][$qSe["idgroup"]]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                     break;        
                                 }
                                 initUsersItems ($date, $iduser, "");
+                                    echo " přírůstek PS = (".$date.", ".$iduser.", '', +".strtotime($qp['endTime']) - strtotime($qp['startTime'])." s) | ";
                                 $users[$date][$iduser][""]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);                                    
                 }                    
             }
