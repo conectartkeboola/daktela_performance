@@ -118,14 +118,14 @@ function QP_processing () {
                 switch ($qp["type"]) {
                     case "Q":   $qSess[] = ["endTime" => $qp["endTime"], "idgroup" => $qp["idgroup"]];
                                 initUsersItems ($date, $iduser, $qp["idgroup"]);
-                                    echo " přírůstek QS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";
+                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek QS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";}
                                 $users[$date][$iduser][$qp["idgroup"]]["queueSession"] += $duration;
                                 break;
                     case "P":   if (empty($qSess)) {break;}
                                 foreach ($qSess as $qSe) {
                                     if ($qp["startTime"] > $qSe["endTime"] || $qSe["idgroup"] == "") {continue;}                                    
                                     initUsersItems ($date, $iduser, $qSe["idgroup"]);
-                                        echo " přírůstek PS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";
+                                        if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", ".$qp['idgroup'].", +".$duration." s) | ";}
                                     $users[$date][$iduser][$qSe["idgroup"]]["pauseSession"] += $duration;
                                     break;        
                                 }
