@@ -111,7 +111,7 @@ function QP_processing () {
         foreach ($daysByUserGroup as $iduser => $qps) {    
             usort($qps, function($a, $b) {                              // sort pole $QP podle času v rámci dnů
                 return strcmp($a["startTime"], $b["startTime"]);
-            });                                     if ($date == "2017-06-27" && $iduser == "300000145") {echo "\$qps: "; print_r($qps);}
+            });                                     if ($date == "2017-06-27" && $iduser == "300000145") {echo '$qps: '; print_r($qps);}
             $qSess = [];
             foreach ($qps as $qp) {
                 switch ($qp["type"]) {
@@ -119,12 +119,15 @@ function QP_processing () {
                                 initUsersItems ($date, $iduser, $qp["idgroup"]);
                                 $users[$date][$iduser][$qp["idgroup"]]["queueSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                 break;
-                    case "P":   foreach ($qSess as $qSe) {
-                                    if ($qSe["endTime"] < $qp["startTime"] || $qSe["idgroup"] == "") {continue;}
+                    case "P":   if (empty($qSess)) {break;}
+                                foreach ($qSess as $qSe) {
+                                    if ($qp["startTime"] > $qSe["endTime"] || $qSe["idgroup"] == "") {continue;}
                                     initUsersItems ($date, $iduser, $qSe["idgroup"]);
                                     $users[$date][$iduser][$qSe["idgroup"]]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);
                                     break;        
-                                }                                
+                                }
+                                initUsersItems ($date, $iduser, "");
+                                $users[$date][$iduser][""]["pauseSession"] += strtotime($qp["endTime"]) - strtotime($qp["startTime"]);                                    
                 }                    
             }
         }
@@ -239,7 +242,7 @@ function sessionProcessing ($startTested, $endTested, $type) {
         }
     }
                             if ($processedDate == "2017-06-27" && $iduser == "300000145") {
-                                echo " | session odeslaná na test: (".$startTested.", ".$endTested.", ".$type.", ".$idgroup.") | ";
+                                echo " session odeslaná na test: (".$startTested.", ".$endTested.", ".$type.", ".$idgroup.") | ";
                             }
     addEventPairToArr($startTested, $endTested, $type);     // daný den, uživatel a skupina nemá zatím žádnou uloženou událost -> uložím testovanou session do pole $events
 }
@@ -253,7 +256,7 @@ function sesionDayParcelation ($startTime, $endTime, $type) {
         $dayEndTime   = min($endTime,  dateIncrem($processedDate).' 00:00:00');
         if ($dayStartTime < $dayEndTime) {                  // eliminace nevalidních případů
             sessionProcessing($dayStartTime, $dayEndTime, $type);
-        }                                           if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " | parcelovaná session = (".$dayStartTime.", ".$dayEndTime.", ".$type.", ".$idqueue.") | ";}
+        }                                           if ($startDate == "2017-06-27" && $iduser == "300000145") {echo " parcelovaná session = (".$dayStartTime.", ".$dayEndTime.", ".$type.", ".$idqueue.") || ";}
         $processedDate = dateIncrem($processedDate);        // inkrement data o 1 den        
     }
 }
@@ -313,9 +316,9 @@ foreach ($queueSessions as $qsNum => $qs) {
         continue;        
     }
     if ($startTime < $reportIntervTimes["start"] || $startTime > $reportIntervTimes["end"]) {continue;} // session není ze zkoumaného časového rozsahu
-
+            if (substr($startTime,0,10) == "2017-06-27" && $iduser == "300000145") {echo " QS odeslaná k parcelaci = (".$startTime.", ".$endTime.", ".$type.", ".$idqueue.")";}   
     sesionDayParcelation ($startTime, $endTime, "Q");   // session je ze zkoumaného čas. rozsahu -> cyklus generující sessions pro všechny dny, po které trvala reálná session
-            if (substr($startTime,0,10) == "2017-06-27" && $iduser == "300000145") {echo " | QS odeslaná k parcelaci = (".$startTime.", ".$endTime.", ".$type.", ".$idqueue.")";}   
+  
 }
 echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QUEUESESSIONS... ZAHÁJENA ITERACE PAUSESESSIONS... " : "";     // volitelný diagnostický výstup do logu
 // ==============================================================================================================================================================================================
