@@ -130,7 +130,7 @@ function QP_processing () {
                                     break;        
                                 }
                                 initUsersItems ($date, $iduser, "");
-                                    echo " přírůstek PS = (".$date.", ".$iduser.", '', +".$duration." s) | ";
+                                    if ($date == "2017-06-27" && $iduser == "300000145") {echo " přírůstek PS = (".$date.", ".$iduser.", '', +".$duration." s) | ";}
                                 $users[$date][$iduser][""]["pauseSession"] += $duration;                                    
                 }                    
             }
