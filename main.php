@@ -341,7 +341,7 @@ foreach ($queueSessions as $qsNum => $qs) {
     }}
     sesionDayParcelation ($startTime, $endTime, "Q");   // cyklus generující sessions pro všechny dny, po které trvala reálná session  
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QS...  ZAHÁJENA ITERACE PS\n" : "";                    // diag. výstup
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE QS...  ZAHÁJENA ITERACE LS\n" : "";                    // diag. výstup
 // ==============================================================================================================================================================================================
 // iterace loginSessions + pauseSessions + activities + records
 // iterace loginSessions  (loginSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
@@ -475,7 +475,7 @@ foreach ($records as $rNum => $r) {
     if ($idstatus == '00000244') { $users[$editedDate][$iduser][$idgroup]["recordsBusy"]    ++; }   // obsazeno
     if ($idstatus == '00000261') { $users[$editedDate][$iduser][$idgroup]["recordsDenied"]  ++; }   // odmítnuto
 }
-echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE RECORDS\n" : "";                       // diag. výstup
+echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE RECORDS...  ZAHÁJEN EVENTS MAGIC\n" : "";      // diag. výstup
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // sort pole uživatelů podle počtu hovorů v rámci dnů
 /*
