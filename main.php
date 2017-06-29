@@ -304,7 +304,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     }
     $queueGroup[$q_idqueue] = $idgroup;                     // zápis prvku do pole párů fronta-skupina
 }
-echo $diagOutOptions["basicStatusInfo"] ? 'POLE $queueGroup BYLO ÚSPĚŠNĚ SESTAVENO\n' : '';                         // diag. výstup
+echo $diagOutOptions["basicStatusInfo"] ? "POLE queueGroup BYLO ÚSPĚŠNĚ SESTAVENO\n" : '';                          // diag. výstup
 if ($diagOutOptions["queueGroupDump"]) {                                                                            // diag. výstup
     echo '$queueGroup = \n';
     print_r($queueGroup);
