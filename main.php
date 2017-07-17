@@ -16,8 +16,6 @@ $reportIntervHistDays = $config["parameters"]["reportIntervHistDays"];  // čas.
 $diagOutOptions       = $config["parameters"]["diagOutOptions"];        // diag. výstup do logu Jobs v KBC - klíče: basicStatusInfo, queueGroupDump, usersActivitiesDump, ...
                                                                         //                                          ... eventsDump, invalidRowsInfo, invalidRowsDump, eventsOutTable
 $adhocDump            = $config["parameters"]["adhocDump"];             // diag. výstup do logu Jobs v KBC - klíče: active, date, iduser
-
-echo $diagOutOptions["basicStatusInfo"] ? "SPUŠTĚNA APLIKACE Z ".getcwd()."\n" : "";                            // diag. výstup
 // ==============================================================================================================================================================================================
 
 $tabsIn = ["groups", "queues", "queueSessions", "loginSessions", "pauseSessions", "activities", "records"];     // vstupní tabulky
@@ -449,14 +447,14 @@ echo $diagOutOptions["basicStatusInfo"] ? "DOKONČENA ITERACE AKTIVIT...  ZAHÁJ
 
 foreach ($records as $rNum => $r) {
     if ($rNum == 0) {continue;}                         // vynechání hlavičky tabulky
-    $idinstance = $r[8];
+    $idinstance = $r[10];
     if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $iduser   = $r[1];
     $idqueue  = $r[2];
-    $edited   = $r[6];
+    $edited   = $r[8];
     $idstatus = $r[3];
-    $idcall   = $r[5];
+    $idcall   = $r[6];
 
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
