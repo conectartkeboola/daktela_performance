@@ -16,6 +16,8 @@ $reportIntervHistDays = $config["parameters"]["reportIntervHistDays"];  // čas.
 $diagOutOptions       = $config["parameters"]["diagOutOptions"];        // diag. výstup do logu Jobs v KBC - klíče: basicStatusInfo, queueGroupDump, usersActivitiesDump, ...
                                                                         //                                          ... eventsDump, invalidRowsInfo, invalidRowsDump, eventsOutTable
 $adhocDump            = $config["parameters"]["adhocDump"];             // diag. výstup do logu Jobs v KBC - klíče: active, date, iduser
+
+echo $diagOutOptions["basicStatusInfo"] ? "SPUŠTĚNA APLIKACE Z ".getcwd()."\n" : "";                            // diag. výstup
 // ==============================================================================================================================================================================================
 
 $tabsIn = ["groups", "queues", "queueSessions", "loginSessions", "pauseSessions", "activities", "records"];     // vstupní tabulky
