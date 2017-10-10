@@ -12,10 +12,40 @@ $configFile = $dataDir."config.json";
 $config     = json_decode(file_get_contents($configFile), true);
 
 // parametry importované z konfiguračního JSON v KBC
-$reportIntervHistDays = $config["parameters"]["reportIntervHistDays"];  // čas. rozsah historie pro tvorbu reportu - pole má klíče "start" a "end", kde musí být "start" >= "end"
-$diagOutOptions       = $config["parameters"]["diagOutOptions"];        // diag. výstup do logu Jobs v KBC - klíče: basicStatusInfo, queueGroupDump, usersActivitiesDump, ...
-                                                                        //                                          ... eventsDump, invalidRowsInfo, invalidRowsDump, eventsOutTable
-$adhocDump            = $config["parameters"]["adhocDump"];             // diag. výstup do logu Jobs v KBC - klíče: active, date, iduser
+$confParam = $config["parameters"];
+$processedInst        = $confParam["processedInstances"];   // pole s údaji, které instance mají být zpracovány - např. ["3", "5"]
+$reportIntervHistDays = $confParam["reportIntervHistDays"]; // čas. rozsah historie pro tvorbu reportu - pole má klíče "start" a "end", kde musí být "start" >= "end"
+$diagOutOptions       = $confParam["diagOutOptions"];       // diag. výstup do logu Jobs v KBC - klíče: basicStatusInfo, queueGroupDump, usersActivitiesDump, ...
+                                                            //                                          ... eventsDump, invalidRowsInfo, invalidRowsDump, eventsOutTable
+$adhocDump            = $confParam["adhocDump"];            // diag. výstup do logu Jobs v KBC - klíče: active, date, iduser
+
+/* import parametru z JSON řetězce v definici Customer Science PHP v KBC:
+  {
+    "reportIntervHistDays": {
+      "start": 3,
+      "end": 0
+    },
+    "processedInstances": [
+      "3",
+      "5"
+    ],
+    "diagOutOptions": {
+      "basicStatusInfo": true,
+      "queueGroupDump": false,
+      "usersActivitiesDump": false,
+      "eventsDump": false,
+      "invalidRowsInfo": false,
+      "invalidRowsDump": false,
+      "eventsOutTable": false
+    },
+    "adhocDump": {
+      "active": false,
+      "date": "2017-09-05",
+      "iduser": "300000366"
+    }
+  }
+  -> podrobnosti viz https://developers.keboola.com/extend/custom-science
+*/
 // ==============================================================================================================================================================================================
 
 $tabsIn = ["groups", "queues", "queueSessions", "loginSessions", "pauseSessions", "activities", "records"];     // vstupní tabulky
@@ -238,7 +268,7 @@ function sessionTestedVsSaved($startTested, $endTested, $type, $evnts) {        
             } 
         }
     }
-    addEventPairToArr($startTested, $endTested, $type); // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
+    addEventPairToArr($startTested, $endTested, $type);     // nepřekrývá-li se testovaná session s žádnou uloženou session, uložím ji do pole $events
 }
 function sessionProcessing ($startTested, $endTested, $type) {
     global $processedDate, $iduser, $idgroup, $events, $adhocDump;
@@ -294,7 +324,7 @@ foreach ($queues as $qNum => $q) {                          // iterace řádků 
     $q_idinstance = $q[2];
     $q_idgroup    = $q[3];
     
-    if ($q_idinstance != '3') {continue;}                   // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if (!in_array($q_idinstance, $processedInst)){continue;}// verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
     if (array_key_exists($q_idqueue,$queueGroup)){continue;}// iterovaná fronta už je v poli párů fronta-skupina
     
     foreach ($groups as $gNum => $g) {                      // přiřazení skupiny k frontě
@@ -317,12 +347,12 @@ if ($diagOutOptions["queueGroupDump"]) {                    // diag. výstup
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace queueSessions
 
-logInfo("ZAHÁJENA ITERACE QUEUESESSIONS");              // diag. výstup
+logInfo("ZAHÁJENA ITERACE QUEUESESSIONS");                  // diag. výstup
 
 foreach ($queueSessions as $qsNum => $qs) {
-    if ($qsNum == 0) {continue;}                        // vynechání hlavičky tabulky
-    $idinstance = substr($qs[0], 0 ,1);                 // $qs[0] ... idqueuesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
-    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if ($qsNum == 0) {continue;}                            // vynechání hlavičky tabulky
+    $idinstance = substr($qs[0], 0 ,1);                     // $qs[0] ... idqueuesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+    if (!in_array($idinstance, $processedInst)) {continue;} // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $startTime = $qs[1];
     $endTime   = !empty($qs[2]) ? $qs[2] : date('Y-m-d H:i:s');
@@ -342,22 +372,22 @@ foreach ($queueSessions as $qsNum => $qs) {
     if ($adhocDump["active"]) {if (substr($startTime, 0, 10) == $adhocDump["date"] && $iduser == $adhocDump["iduser"]) {
         echo "QS odeslaná k parcelaci = (start ".$startTime.", end ".$endTime.", idqueue ".$idqueue.")\n";          // diag. výstup
     }}
-    sesionDayParcelation ($startTime, $endTime, "Q");   // cyklus generující sessions pro všechny dny, po které trvala reálná session  
+    sesionDayParcelation ($startTime, $endTime, "Q");       // cyklus generující sessions pro všechny dny, po které trvala reálná session  
 }
-logInfo("DOKONČENA ITERACE QS...  ZAHÁJENA ITERACE LS");// diag. výstup
+logInfo("DOKONČENA ITERACE QS...  ZAHÁJENA ITERACE LS");    // diag. výstup
 // ==============================================================================================================================================================================================
 // iterace loginSessions + pauseSessions + activities + records
 // iterace loginSessions  (loginSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
 
 foreach ($loginSessions as $lsNum => $ls) {
-    if ($lsNum == 0) {continue;}                        // vynechání hlavičky tabulky
-    $idinstance = substr($ls[0], 0 ,1);                 // $ls[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
-    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if ($lsNum == 0) {continue;}                            // vynechání hlavičky tabulky
+    $idinstance = substr($ls[0], 0 ,1);                     // $ls[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+    if (!in_array($idinstance, $processedInst)) {continue;} // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $startTime = $ls[1];
     $endTime   = !empty($ls[2]) ? $ls[2] : date('Y-m-d H:i:s');
     $iduser    = $ls[4];
-    $idgroup   = "";                                    // loginSessions nejsou vázané na skupinu -> je použita prázdná skupina
+    $idgroup   = "";                                        // loginSessions nejsou vázané na skupinu -> je použita prázdná skupina
     
     if (empty($startTime) || empty($endTime) || empty($iduser)) {                                                   // diag. výstup + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v LS\n"; }
@@ -371,21 +401,21 @@ foreach ($loginSessions as $lsNum => $ls) {
     if ($adhocDump["active"]) {if (substr($startTime, 0, 10) == $adhocDump["date"] && $iduser == $adhocDump["iduser"]) {
         echo "LS odeslaná k parcelaci = (start ".$startTime.", end ".$endTime.")\n";                                // diag. výstup
     }}
-    sesionDayParcelation ($startTime, $endTime, "L");   // cyklus generující sessions pro všechny dny, po které trvala reálná session
+    sesionDayParcelation ($startTime, $endTime, "L");       // cyklus generující sessions pro všechny dny, po které trvala reálná session
 }
-logInfo("DOKONČENA ITERACE LS...  ZAHÁJENA ITERACE PS");// diag. výstup
+logInfo("DOKONČENA ITERACE LS...  ZAHÁJENA ITERACE PS");    // diag. výstup
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
 // iterace pauseSessions  (pauseSessions nezávisí na skupinách, jen na uživatelích -> nelze je přiřazovat uživatelům jednotlivě, pouze sumárně v rámci prázdné skupiny)
 
 foreach ($pauseSessions as $psNum => $ps) {
-    if ($psNum == 0) {continue;}                        // vynechání hlavičky tabulky
-    $idinstance = substr($ps[0], 0 ,1);                 // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
-    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if ($psNum == 0) {continue;}                            // vynechání hlavičky tabulky
+    $idinstance = substr($ps[0], 0 ,1);                     // $ps[0] ... idpausesession, 1. číslice určuje číslo instance (v tabulce není přímo idinstance)
+    if (!in_array($idinstance, $processedInst)) {continue;} // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $startTime = $ps[1];
     $endTime   = !empty($ps[2]) ? $ps[2] : date('Y-m-d H:i:s');
     $iduser    = $ps[5];
-    $idgroup   = "";                                    // pauseSessions nejsou vázané na skupinu -> je použita prázdná skupina
+    $idgroup   = "";                                        // pauseSessions nejsou vázané na skupinu -> je použita prázdná skupina
     
     if (empty($startTime) || empty($endTime) || empty($iduser)) {                                                   // diag. výstup + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v PS\n"; }
@@ -399,7 +429,7 @@ foreach ($pauseSessions as $psNum => $ps) {
     if ($adhocDump["active"]) {if (substr($startTime, 0, 10) == $adhocDump["date"] && $iduser == $adhocDump["iduser"]) {
         echo "PS odeslaná k parcelaci = (start ".$startTime.", end ".$endTime.")\n";                                // diag. výstup
     }}
-    sesionDayParcelation ($startTime, $endTime, "P");   // cyklus generující sessions pro všechny dny, po které trvala reálná session
+    sesionDayParcelation ($startTime, $endTime, "P");       // cyklus generující sessions pro všechny dny, po které trvala reálná session
 }
 logInfo("DOKONČENA ITERACE PS...  ZAHÁJEN QP PROCESSING");                                                          // diag. výstup
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                
@@ -416,9 +446,9 @@ logInfo("DOKONČEN QP PROCESSING...  ZAHÁJENA ITERACE AKTIVIT");               
 // iterace activities
 
 foreach ($activities as $aNum => $a) {
-    if ($aNum == 0) {continue;}                         // vynechání hlavičky tabulky
+    if ($aNum == 0) {continue;}                             // vynechání hlavičky tabulky
     $idinstance = $a[18];
-    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if (!in_array($idinstance, $processedInst)) {continue;} // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $idqueue   = $a[5];
     $iduser    = $a[6];
@@ -449,9 +479,9 @@ logInfo("DOKONČENA ITERACE AKTIVIT...  ZAHÁJENA ITERACE RECORDS");  // diag. v
 // iterace records
 
 foreach ($records as $rNum => $r) {
-    if ($rNum == 0) {continue;}                         // vynechání hlavičky tabulky
+    if ($rNum == 0) {continue;}                             // vynechání hlavičky tabulky
     $idinstance = $r[10];
-    if ($idinstance != '3') {continue;}                 // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
+    if (!in_array($idinstance, $processedInst)) {continue;} // verze Daktely < 6  -> model neobsahuje tabulku 'activities' -> nezpracováváme
 
     $iduser   = $r[1];
     $idqueue  = $r[2];
@@ -462,7 +492,7 @@ foreach ($records as $rNum => $r) {
     $idgroup    = findInArray($idqueue, $queueGroup);
     $editedDate = substr($edited, 0, 10);
     
-    if (empty($edited) || empty($iduser)) {             // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
+    if (empty($edited) || empty($iduser)) {                 // volitelný diagnostický výstup do logu + vyřazení případných neúplných záznamů
         if ($diagOutOptions["invalidRowsInfo"]) {echo "nevalidní záznam v RECORDS\n"; }
         if ($diagOutOptions["invalidRowsDump"]) {echo '$r = \n'; print_r($r); }
         if ($diagOutOptions["invalidRowsInfo"] || $diagOutOptions["invalidRowsDump"]) {echo "\n\n"; }
